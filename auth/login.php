@@ -62,6 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
+include '../users/includes/header.php';
 ?>
 
 <!DOCTYPE html>

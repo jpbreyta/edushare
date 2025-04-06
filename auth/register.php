@@ -48,6 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
+include '../users/includes/header.php';
 ?>
 
 <!DOCTYPE html>
@@ -104,22 +105,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <?php endif; ?>
                         
                         <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-                            <div class="form-outline mb-4">
+                            <div class="form-outline ">
                                 <input type="text" id="name" name="name" class="form-control" required />
                                 <label class="form-label" for="name">Full Name</label>
                             </div>
 
-                            <div class="form-outline mb-4">
+                            <div class="form-outline ">
                                 <input type="text" id="username" name="username" class="form-control" required />
                                 <label class="form-label" for="username">Username</label>
                             </div>
 
-                            <div class="form-outline mb-4">
+                            <div class="form-outline ">
                                 <input type="email" id="email" name="email" class="form-control" required />
                                 <label class="form-label" for="email">Email</label>
                             </div>
                             
-                            <div class="form-outline mb-4">
+                            <div class="form-outline ">
                                 <select class="form-select" id="user_type" name="user_type" required>
                                     <option value="" selected disabled>Select account type</option>
                                     <option value="school">School</option>
@@ -129,22 +130,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <label class="form-label" for="user_type">Account Type</label>
                             </div>
                             
-                            <div class="form-outline mb-4">
+                            <div class="form-outline ">
                                 <input type="text" id="organization" name="organization" class="form-control" />
                                 <label class="form-label" for="organization">School/Organization Name (if applicable)</label>
                             </div>
 
-                            <div class="form-outline mb-4">
+                            <div class="form-outline ">
                                 <input type="password" id="password" name="password" class="form-control" required />
                                 <label class="form-label" for="password">Password</label>
                             </div>
 
-                            <div class="form-outline mb-4">
+                            <div class="form-outline ">
                                 <input type="password" id="repeat_password" name="repeat_password" class="form-control" required />
                                 <label class="form-label" for="repeat_password">Repeat password</label>
                             </div>
 
-                            <div class="form-check d-flex justify-content-center mb-4">
+                            <div class="form-check d-flex justify-content-center ">
                                 <input class="form-check-input me-2" type="checkbox" value="" id="terms" name="terms" required />
                                 <label class="form-check-label" for="terms">
                                     I have read and agree to the terms

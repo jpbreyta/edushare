@@ -41,7 +41,7 @@ $stmt = $conn->prepare("SELECT r.*, u.name as uploader_name, u.user_type as uplo
 $stmt->execute();
 $recent_resources = $stmt->get_result();
 
-include 'header.php';
+include './includes/header.php';
 ?>
 
 <div class="row mb-4">
@@ -146,5 +146,3 @@ include 'header.php';
         </div>
     </div>
 </div>
-
-<?php include 'footer.php'; ?>
