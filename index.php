@@ -3,6 +3,7 @@ require_once 'auth/auth_functions.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,22 +14,27 @@ require_once 'auth/auth_functions.php';
         .bg-primary-custom {
             background-color: #4CAF50;
         }
+
         .btn-primary {
             background-color: #4CAF50;
             border-color: #4CAF50;
         }
+
         .btn-primary:hover {
             background-color: #388E3C;
             border-color: #388E3C;
         }
+
         .text-primary {
             color: #4CAF50 !important;
         }
+
         .hero-section {
             background-color: #f8f9fa;
             padding: 80px 0;
             margin-bottom: 40px;
         }
+
         .feature-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
@@ -36,6 +42,7 @@ require_once 'auth/auth_functions.php';
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom">
         <div class="container">
@@ -54,7 +61,7 @@ require_once 'auth/auth_functions.php';
                         <a class="nav-link" href="users/resources.php">Resources</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">About SDG 4</a>
+                        <a class="nav-link" href="users/sdg4.php">About SDG 4</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Contact</a>
@@ -70,9 +77,11 @@ require_once 'auth/auth_functions.php';
                                 <li><a class="dropdown-item" href="users/index.php">Dashboard</a></li>
                                 <li><a class="dropdown-item" href="#">Profile</a></li>
                                 <?php if (get_user_type() == 'admin'): ?>
-                                <li><a class="dropdown-item" href="./admin/index.php">Admin Panel</a></li>
+                                    <li><a class="dropdown-item" href="./admin/index.php">Admin Panel</a></li>
                                 <?php endif; ?>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="auth/logout.php">Logout</a></li>
                             </ul>
                         </li>
@@ -97,7 +106,7 @@ require_once 'auth/auth_functions.php';
                     <h1 class="display-4 fw-bold mb-4">EduShare</h1>
                     <h2 class="mb-4">Digital Library for Underprivileged Schools</h2>
                     <p class="lead mb-4">
-                        A platform where schools and donors can upload and track educational materials, 
+                        A platform where schools and donors can upload and track educational materials,
                         supporting SDG 4: Quality Education for all.
                     </p>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-start">
@@ -106,8 +115,9 @@ require_once 'auth/auth_functions.php';
                     </div>
                 </div>
                 <div class="col-md-6 text-center">
-                    <img src="https://via.placeholder.com/600x400?text=EduShare" alt="EduShare" class="img-fluid rounded shadow">
+                    <img src="./assets/images/logo.png" alt="EduShare" class="img-fluid rounded shadow" style="max-width: 300px;">
                 </div>
+
             </div>
         </div>
     </section>
@@ -118,7 +128,7 @@ require_once 'auth/auth_functions.php';
             <h2>Benefits for Users</h2>
             <p class="lead">EduShare provides a platform for sharing educational resources with those who need them most.</p>
         </div>
-        
+
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="card h-100 text-center">
@@ -129,7 +139,7 @@ require_once 'auth/auth_functions.php';
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="card h-100 text-center">
                     <div class="card-body">
@@ -139,7 +149,7 @@ require_once 'auth/auth_functions.php';
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="card h-100 text-center">
                     <div class="card-body">
@@ -167,7 +177,7 @@ require_once 'auth/auth_functions.php';
                 </ul>
             </div>
             <div class="col-md-6 text-center">
-                <img src="https://via.placeholder.com/500x300?text=SDG+4" alt="SDG 4" class="img-fluid rounded shadow">
+                <img src="./assets/images/sdg4.png" alt="SDG 4" class="img-fluid rounded shadow">
             </div>
         </div>
     </section>
@@ -186,6 +196,7 @@ require_once 'auth/auth_functions.php';
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
 
 <?php include './users/includes/footer.php'; ?>

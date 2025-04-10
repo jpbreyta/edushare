@@ -52,7 +52,7 @@ require_once '../auth/auth_functions.php';
                     </li>
                     <?php endif; ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">About SDG 4</a>
+                        <a class="nav-link" href="">About SDG 4</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
