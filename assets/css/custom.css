@@ -1,0 +1,17 @@
+.bg-primary-custom {
+    background-color: #4CAF50;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.btn-primary:hover {
+    background-color: #388E3C;
+    border-color: #388E3C;
+}
+
+.text-primary {
+    color: #4CAF50 !important;
+}
