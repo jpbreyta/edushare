@@ -129,6 +129,9 @@ include './includes/header.php';
                                     <a href="view_resource.php?id=<?php echo $resource['id']; ?>" class="btn btn-sm btn-primary">
                                         <i class="fas fa-eye"></i> View
                                     </a>
+                                    <a href="?id=<?php echo $resource['id']; ?>" class="btn btn-sm btn-primary ml-1">
+                                        <i class="fas fa-bookmark"></i> Bookmark
+                                    </a>
                                 </td>
                             </tr>
                             <?php endwhile; ?>
