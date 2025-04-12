@@ -1,3 +1,4 @@
+
 <?php
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
@@ -11,7 +12,7 @@ $search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
 $query = "SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
           FROM resources r 
           JOIN users u ON r.uploaded_by = u.id 
-          WHERE 1=1";
+          WHERE r.is_visible = 1";
 $params = [];
 $types = "";
 
@@ -44,25 +45,6 @@ if (!empty($params)) {
 }
 $stmt->execute();
 $resources = $stmt->get_result();
-
-// Log access if user is logged in
-if (is_logged_in() && isset($_GET['view']) && is_numeric($_GET['view'])) {
-    $resource_id = $_GET['view'];
-    $user_id = $_SESSION['user_id'];
-    
-    // Check if already logged
-    $check_stmt = $conn->prepare("SELECT id FROM resource_access WHERE user_id = ? AND resource_id = ? AND access_date > DATE_SUB(NOW(), INTERVAL 1 DAY)");
-    $check_stmt->bind_param("ii", $user_id, $resource_id);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
-    
-    if ($check_result->num_rows == 0) {
-        // Log new access
-        $log_stmt = $conn->prepare("INSERT INTO resource_access (user_id, resource_id) VALUES (?, ?)");
-        $log_stmt->bind_param("ii", $user_id, $resource_id);
-        $log_stmt->execute();
-    }
-}
 
 include './includes/header.php';
 ?>
@@ -97,23 +79,18 @@ include './includes/header.php';
                             <option value="">All Categories</option>
                             <option value="textbook" <?php echo $category == 'textbook' ? 'selected' : ''; ?>>Textbook</option>
                             <option value="ebook" <?php echo $category == 'ebook' ? 'selected' : ''; ?>>E-Book</option>
-                            <option value="video" <?php echo $category == 'video' ? 'selected' : ''; ?>>Video Tutorial</option>
-                            <option value="audio" <?php echo $category == 'audio' ? 'selected' : ''; ?>>Audio Material</option>
                             <option value="presentation" <?php echo $category == 'presentation' ? 'selected' : ''; ?>>Presentation</option>
                             <option value="worksheet" <?php echo $category == 'worksheet' ? 'selected' : ''; ?>>Worksheet</option>
-                            <option value="scholarship" <?php echo $category == 'scholarship' ? 'selected' : ''; ?>>Scholarship</option>
-                            <option value="other" <?php echo $category == 'other' ? 'selected' : ''; ?>>Other</option>
                         </select>
                     </div>
                     <div class="col-md-3">
                         <select class="form-select" name="audience">
                             <option value="">All Audiences</option>
-                            <option value="elementary" <?php echo $audience == 'elementary' ? 'selected' : ''; ?>>Elementary School</option>
-                            <option value="middle" <?php echo $audience == 'middle' ? 'selected' : ''; ?>>Middle School</option>
-                            <option value="high" <?php echo $audience == 'high' ? 'selected' : ''; ?>>High School</option>
-                            <option value="college" <?php echo $audience == 'college' ? 'selected' : ''; ?>>College/University</option>
-                            <option value="teacher" <?php echo $audience == 'teacher' ? 'selected' : ''; ?>>Teachers</option>
-                            <option value="all" <?php echo $audience == 'all' ? 'selected' : ''; ?>>All Levels</option>
+                            <option value="cics" <?php echo $audience == 'cics' ? 'selected' : ''; ?>>CICS</option>
+                            <option value="cte" <?php echo $audience == 'cte' ? 'selected' : ''; ?>>CTE</option>
+                            <option value="cit" <?php echo $audience == 'cit' ? 'selected' : ''; ?>>CIT</option>
+                            <option value="cas" <?php echo $audience == 'cas' ? 'selected' : ''; ?>>CAS</option>
+                            <option value="cabe" <?php echo $audience == 'cabe' ? 'selected' : ''; ?>>CABE</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -135,22 +112,16 @@ include './includes/header.php';
                         $icon_class = 'fa-file-alt';
                         if ($resource['category'] == 'textbook' || $resource['category'] == 'ebook') {
                             $icon_class = 'fa-book';
-                        } elseif ($resource['category'] == 'video') {
-                            $icon_class = 'fa-video';
-                        } elseif ($resource['category'] == 'audio') {
-                            $icon_class = 'fa-headphones';
                         } elseif ($resource['category'] == 'presentation') {
                             $icon_class = 'fa-file-powerpoint';
                         } elseif ($resource['category'] == 'worksheet') {
                             $icon_class = 'fa-file-alt';
-                        } elseif ($resource['category'] == 'scholarship') {
-                            $icon_class = 'fa-graduation-cap';
                         }
                         ?>
                         <i class="fas <?php echo $icon_class; ?> me-2"></i>
                         <span class="badge bg-primary"><?php echo ucfirst($resource['category']); ?></span>
                         <?php if (!empty($resource['target_audience'])): ?>
-                            <span class="badge bg-secondary"><?php echo ucfirst($resource['target_audience']); ?></span>
+                            <span class="badge bg-secondary"><?php echo strtoupper($resource['target_audience']); ?></span>
                         <?php endif; ?>
                     </div>
                     <div class="card-body">
@@ -172,7 +143,7 @@ include './includes/header.php';
     <?php else: ?>
         <div class="col-md-12">
             <div class="alert alert-info text-center">
-                No resources found matching your criteria. Please try different filters or <a href="upload.php" class="alert-link">upload a resource</a>.
+                No resources found matching your criteria. Please try different filters or <a href="upload_form.php" class="alert-link">upload a resource</a>.
             </div>
         </div>
     <?php endif; ?>
