@@ -1,6 +1,110 @@
 <?php
-// This is a static demonstration file - no actual authentication logic
+require_once '../auth/config.php';
+require_once __DIR__ . '/db_functions.php';
+
+// Check if session is not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in and is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+    header('Location: ../auth/login.php');
+    exit();
+}
+
 $active_tab = 'schools';
+$message = '';
+$error = '';
+
+// Handle CRUD operations
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'add':
+                $name = $_POST['name'];
+                $level = $_POST['level'];
+                $region = $_POST['region'];
+                $address = $_POST['address'];
+                $contact_person = $_POST['contact_person'];
+                $email = $_POST['email'];
+                $phone = $_POST['phone'];
+                
+                try {
+                    if (addSchool($name, $level, $region, $address, $contact_person, $email, $phone)) {
+                        $message = 'School added successfully!';
+                    } else {
+                        $error = 'Failed to add school. Please try again.';
+                    }
+                } catch (mysqli_sql_exception $e) {
+                    if ($e->getCode() == 1062) { // MySQL error code for duplicate entry
+                        $error = 'A school with this email already exists in the database.';
+                    } else {
+                        $error = 'An error occurred while adding the school: ' . $e->getMessage();
+                    }
+                }
+                break;
+                
+            case 'edit':
+                $id = $_POST['id'];
+                $name = $_POST['name'];
+                $level = $_POST['level'];
+                $region = $_POST['region'];
+                $address = $_POST['address'];
+                $contact_person = $_POST['contact_person'];
+                $email = $_POST['email'];
+                $phone = $_POST['phone'];
+                
+                try {
+                    if (updateSchool($id, $name, $level, $region, $address, $contact_person, $email, $phone)) {
+                        $message = 'School updated successfully!';
+                    } else {
+                        $error = 'Failed to update school. Please try again.';
+                    }
+                } catch (mysqli_sql_exception $e) {
+                    if ($e->getCode() == 1062) {
+                        $error = 'A school with this email already exists in the database.';
+                    } else {
+                        $error = 'An error occurred while updating the school: ' . $e->getMessage();
+                    }
+                }
+                break;
+                
+            case 'delete':
+                $id = $_POST['id'];
+                if (deleteSchool($id)) {
+                    $message = 'School deleted successfully!';
+                } else {
+                    $error = 'Failed to delete school. Please try again.';
+                }
+                break;
+        }
+    }
+}
+
+// Get all schools for display
+$schools = getAllSchools();
+
+// Handle filtering
+$filtered_schools = $schools;
+if (isset($_GET['region']) && !empty($_GET['region'])) {
+    $filtered_schools = array_filter($filtered_schools, function($school) {
+        return $school['region'] === $_GET['region'];
+    });
+}
+if (isset($_GET['level']) && !empty($_GET['level'])) {
+    $filtered_schools = array_filter($filtered_schools, function($school) {
+        return $school['level'] === $_GET['level'];
+    });
+}
+if (isset($_GET['search']) && !empty($_GET['search'])) {
+    $search = strtolower($_GET['search']);
+    $filtered_schools = array_filter($filtered_schools, function($school) use ($search) {
+        return strpos(strtolower($school['name']), $search) !== false ||
+               strpos(strtolower($school['address']), $search) !== false ||
+               strpos(strtolower($school['contact_person']), $search) !== false;
+    });
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -93,13 +197,13 @@ $active_tab = 'schools';
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> Admin User
+                            <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['name']); ?>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-1"></i> Profile</a></li>
                             <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i> Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                            <li><a class="dropdown-item" href="../auth/logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -164,15 +268,29 @@ $active_tab = 'schools';
                         </div>
                     </div>
 
+                    <?php if ($message): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <?php echo $message; ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <?php echo $error; ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- School Filters -->
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-body">
-                                    <form class="row g-3">
+                                    <form class="row g-3" method="GET">
                                         <div class="col-md-3">
-                                            <label for="schoolRegion" class="form-label">Region</label>
-                                            <select class="form-select" id="schoolRegion">
+                                            <label for="regionFilter" class="form-label">Region</label>
+                                            <select class="form-select" id="regionFilter" name="region">
                                                 <option value="">All Regions</option>
                                                 <option value="north">North</option>
                                                 <option value="south">South</option>
@@ -182,8 +300,8 @@ $active_tab = 'schools';
                                             </select>
                                         </div>
                                         <div class="col-md-3">
-                                            <label for="schoolLevel" class="form-label">School Level</label>
-                                            <select class="form-select" id="schoolLevel">
+                                            <label for="levelFilter" class="form-label">School Level</label>
+                                            <select class="form-select" id="levelFilter" name="level">
                                                 <option value="">All Levels</option>
                                                 <option value="elementary">Elementary</option>
                                                 <option value="middle">Middle School</option>
@@ -192,11 +310,11 @@ $active_tab = 'schools';
                                             </select>
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="searchSchool" class="form-label">Search</label>
-                                            <input type="text" class="form-control" id="searchSchool" placeholder="School name, location, or contact">
+                                            <label for="searchFilter" class="form-label">Search</label>
+                                            <input type="text" class="form-control" id="searchFilter" name="search" placeholder="School name, location, or contact">
                                         </div>
                                         <div class="col-md-2 d-flex align-items-end">
-                                            <button type="button" class="btn btn-primary w-100">
+                                            <button type="submit" class="btn btn-primary w-100">
                                                 <i class="fas fa-filter me-1"></i> Filter
                                             </button>
                                         </div>
@@ -209,10 +327,10 @@ $active_tab = 'schools';
                     <!-- View Toggle Buttons -->
                     <div class="mb-3">
                         <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-primary active" id="tableViewBtn">
+                            <button type="button" class="btn btn-outline-primary active view-toggle" data-view="table">
                                 <i class="fas fa-table me-1"></i> Table View
                             </button>
-                            <button type="button" class="btn btn-outline-primary" id="cardViewBtn">
+                            <button type="button" class="btn btn-outline-primary view-toggle" data-view="card">
                                 <i class="fas fa-th-large me-1"></i> Card View
                             </button>
                         </div>
@@ -231,7 +349,8 @@ $active_tab = 'schools';
                                             <th>ID</th>
                                             <th>School Name</th>
                                             <th>Level</th>
-                                            <th>Location</th>
+                                            <th>Region</th>
+                                            <th>Address</th>
                                             <th>Contact Person</th>
                                             <th>Email</th>
                                             <th>Phone</th>
@@ -239,90 +358,40 @@ $active_tab = 'schools';
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>1</td>
-                                            <td>Westside Elementary School</td>
-                                            <td>Elementary</td>
-                                            <td>West Region, City A</td>
-                                            <td>John Smith</td>
-                                            <td>john.smith@westside.edu</td>
-                                            <td>+1 (123) 456-7890</td>
-                                            <td class="table-actions">
-                                                <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>2</td>
-                                            <td>Central High School</td>
-                                            <td>High School</td>
-                                            <td>Central Region, City B</td>
-                                            <td>Emily Davis</td>
-                                            <td>emily.davis@central.edu</td>
-                                            <td>+1 (234) 567-8901</td>
-                                            <td class="table-actions">
-                                                <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>3</td>
-                                            <td>Oakridge Academy</td>
-                                            <td>Middle School</td>
-                                            <td>East Region, City C</td>
-                                            <td>Michael Brown</td>
-                                            <td>michael.brown@oakridge.edu</td>
-                                            <td>+1 (345) 678-9012</td>
-                                            <td class="table-actions">
-                                                <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>4</td>
-                                            <td>Riverside University</td>
-                                            <td>College/University</td>
-                                            <td>South Region, City D</td>
-                                            <td>Jennifer Lee</td>
-                                            <td>jennifer.lee@riverside.edu</td>
-                                            <td>+1 (456) 789-0123</td>
-                                            <td class="table-actions">
-                                                <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>5</td>
-                                            <td>Northside Middle School</td>
-                                            <td>Middle School</td>
-                                            <td>North Region, City E</td>
-                                            <td>Robert Wilson</td>
-                                            <td>robert.wilson@northside.edu</td>
-                                            <td>+1 (567) 890-1234</td>
-                                            <td class="table-actions">
-                                                <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>6</td>
-                                            <td>Sunshine Elementary</td>
-                                            <td>Elementary</td>
-                                            <td>South Region, City F</td>
-                                            <td>Sarah Johnson</td>
-                                            <td>sarah.johnson@sunshine.edu</td>
-                                            <td>+1 (678) 901-2345</td>
-                                            <td class="table-actions">
-                                                <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View"><i class="fas fa-eye"></i></button>
-                                                <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
+                                        <?php foreach ($filtered_schools as $school): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($school['id']); ?></td>
+                                                <td><?php echo htmlspecialchars($school['name']); ?></td>
+                                                <td><?php echo htmlspecialchars($school['level']); ?></td>
+                                                <td><?php echo htmlspecialchars($school['region']); ?></td>
+                                                <td><?php echo htmlspecialchars($school['address']); ?></td>
+                                                <td><?php echo htmlspecialchars($school['contact_person']); ?></td>
+                                                <td><?php echo htmlspecialchars($school['email']); ?></td>
+                                                <td><?php echo htmlspecialchars($school['phone']); ?></td>
+                                                <td class="table-actions">
+                                                    <button type="button" class="btn btn-sm btn-primary" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editSchoolModal"
+                                                            data-id="<?php echo $school['id']; ?>"
+                                                            data-name="<?php echo htmlspecialchars($school['name']); ?>"
+                                                            data-level="<?php echo htmlspecialchars($school['level']); ?>"
+                                                            data-region="<?php echo htmlspecialchars($school['region']); ?>"
+                                                            data-address="<?php echo htmlspecialchars($school['address']); ?>"
+                                                            data-contact="<?php echo htmlspecialchars($school['contact_person']); ?>"
+                                                            data-email="<?php echo htmlspecialchars($school['email']); ?>"
+                                                            data-phone="<?php echo htmlspecialchars($school['phone']); ?>">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#deleteSchoolModal"
+                                                            data-id="<?php echo $school['id']; ?>"
+                                                            data-name="<?php echo htmlspecialchars($school['name']); ?>">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -331,132 +400,47 @@ $active_tab = 'schools';
 
                     <!-- Schools Card View -->
                     <div id="cardView" class="row" style="display: none;">
-                        <div class="col-md-4 mb-4">
-                            <div class="card school-card h-100">
-                                <div class="card-header bg-primary-custom text-white">
-                                    <h5 class="mb-0">Westside Elementary School</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong><i class="fas fa-map-marker-alt me-2"></i> Location:</strong> West Region, City A</p>
-                                    <p><strong><i class="fas fa-graduation-cap me-2"></i> Level:</strong> Elementary</p>
-                                    <p><strong><i class="fas fa-user me-2"></i> Contact:</strong> John Smith</p>
-                                    <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> john.smith@westside.edu</p>
-                                    <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> +1 (123) 456-7890</p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <button class="btn btn-sm btn-info"><i class="fas fa-eye me-1"></i> View</button>
-                                        <button class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i> Edit</button>
-                                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
+                        <?php foreach ($filtered_schools as $school): ?>
+                            <div class="col-md-4 mb-4">
+                                <div class="card school-card h-100">
+                                    <div class="card-header bg-primary-custom text-white">
+                                        <h5 class="mb-0"><?php echo htmlspecialchars($school['name']); ?></h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong><i class="fas fa-map-marker-alt me-2"></i> Location:</strong> <?php echo htmlspecialchars($school['region']); ?></p>
+                                        <p><strong><i class="fas fa-graduation-cap me-2"></i> Level:</strong> <?php echo htmlspecialchars($school['level']); ?></p>
+                                        <p><strong><i class="fas fa-user me-2"></i> Contact:</strong> <?php echo htmlspecialchars($school['contact_person']); ?></p>
+                                        <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> <?php echo htmlspecialchars($school['email']); ?></p>
+                                        <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> <?php echo htmlspecialchars($school['phone']); ?></p>
+                                        <p><strong><i class="fas fa-map me-2"></i> Address:</strong> <?php echo htmlspecialchars($school['address']); ?></p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <div class="d-flex justify-content-between">
+                                            <button type="button" class="btn btn-sm btn-primary edit-school" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editSchoolModal"
+                                                    data-id="<?php echo $school['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($school['name']); ?>"
+                                                    data-level="<?php echo htmlspecialchars($school['level']); ?>"
+                                                    data-region="<?php echo htmlspecialchars($school['region']); ?>"
+                                                    data-address="<?php echo htmlspecialchars($school['address']); ?>"
+                                                    data-contact="<?php echo htmlspecialchars($school['contact_person']); ?>"
+                                                    data-email="<?php echo htmlspecialchars($school['email']); ?>"
+                                                    data-phone="<?php echo htmlspecialchars($school['phone']); ?>">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteSchoolModal"
+                                                    data-id="<?php echo $school['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($school['name']); ?>">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card school-card h-100">
-                                <div class="card-header bg-primary-custom text-white">
-                                    <h5 class="mb-0">Central High School</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong><i class="fas fa-map-marker-alt me-2"></i> Location:</strong> Central Region, City B</p>
-                                    <p><strong><i class="fas fa-graduation-cap me-2"></i> Level:</strong> High School</p>
-                                    <p><strong><i class="fas fa-user me-2"></i> Contact:</strong> Emily Davis</p>
-                                    <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> emily.davis@central.edu</p>
-                                    <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> +1 (234) 567-8901</p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <button class="btn btn-sm btn-info"><i class="fas fa-eye me-1"></i> View</button>
-                                        <button class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i> Edit</button>
-                                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card school-card h-100">
-                                <div class="card-header bg-primary-custom text-white">
-                                    <h5 class="mb-0">Oakridge Academy</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong><i class="fas fa-map-marker-alt me-2"></i> Location:</strong> East Region, City C</p>
-                                    <p><strong><i class="fas fa-graduation-cap me-2"></i> Level:</strong> Middle School</p>
-                                    <p><strong><i class="fas fa-user me-2"></i> Contact:</strong> Michael Brown</p>
-                                    <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> michael.brown@oakridge.edu</p>
-                                    <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> +1 (345) 678-9012</p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <button class="btn btn-sm btn-info"><i class="fas fa-eye me-1"></i> View</button>
-                                        <button class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i> Edit</button>
-                                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card school-card h-100">
-                                <div class="card-header bg-primary-custom text-white">
-                                    <h5 class="mb-0">Riverside University</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong><i class="fas fa-map-marker-alt me-2"></i> Location:</strong> South Region, City D</p>
-                                    <p><strong><i class="fas fa-graduation-cap me-2"></i> Level:</strong> College/University</p>
-                                    <p><strong><i class="fas fa-user me-2"></i> Contact:</strong> Jennifer Lee</p>
-                                    <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> jennifer.lee@riverside.edu</p>
-                                    <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> +1 (456) 789-0123</p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <button class="btn btn-sm btn-info"><i class="fas fa-eye me-1"></i> View</button>
-                                        <button class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i> Edit</button>
-                                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card school-card h-100">
-                                <div class="card-header bg-primary-custom text-white">
-                                    <h5 class="mb-0">Northside Middle School</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong><i class="fas fa-map-marker-alt me-2"></i> Location:</strong> North Region, City E</p>
-                                    <p><strong><i class="fas fa-graduation-cap me-2"></i> Level:</strong> Middle School</p>
-                                    <p><strong><i class="fas fa-user me-2"></i> Contact:</strong> Robert Wilson</p>
-                                    <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> robert.wilson@northside.edu</p>
-                                    <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> +1 (567) 890-1234</p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <button class="btn btn-sm btn-info"><i class="fas fa-eye me-1"></i> View</button>
-                                        <button class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i> Edit</button>
-                                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card school-card h-100">
-                                <div class="card-header bg-primary-custom text-white">
-                                    <h5 class="mb-0">Sunshine Elementary</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong><i class="fas fa-map-marker-alt me-2"></i> Location:</strong> South Region, City F</p>
-                                    <p><strong><i class="fas fa-graduation-cap me-2"></i> Level:</strong> Elementary</p>
-                                    <p><strong><i class="fas fa-user me-2"></i> Contact:</strong> Sarah Johnson</p>
-                                    <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> sarah.johnson@sunshine.edu</p>
-                                    <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> +1 (678) 901-2345</p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <button class="btn btn-sm btn-info"><i class="fas fa-eye me-1"></i> View</button>
-                                        <button class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i> Edit</button>
-                                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash me-1"></i> Delete</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </main>
@@ -464,118 +448,249 @@ $active_tab = 'schools';
     </div>
 
     <!-- Add School Modal -->
-    <div class="modal fade" id="addSchoolModal" tabindex="-1" aria-labelledby="addSchoolModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade" id="addSchoolModal" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addSchoolModalLabel">Add New School</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Add New School</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="schoolName" class="form-label">School Name</label>
-                                <input type="text" class="form-control" id="schoolName" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="schoolLevel" class="form-label">School Level</label>
-                                <select class="form-select" id="schoolLevel" required>
-                                    <option value="" selected disabled>Select school level</option>
-                                    <option value="elementary">Elementary</option>
-                                    <option value="middle">Middle School</option>
-                                    <option value="high">High School</option>
-                                    <option value="college">College/University</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="schoolRegion" class="form-label">Region</label>
-                                <select class="form-select" id="schoolRegion" required>
-                                    <option value="" selected disabled>Select region</option>
-                                    <option value="north">North</option>
-                                    <option value="south">South</option>
-                                    <option value="east">East</option>
-                                    <option value="west">West</option>
-                                    <option value="central">Central</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="schoolCity" class="form-label">City</label>
-                                <input type="text" class="form-control" id="schoolCity" required>
-                            </div>
+                <form method="POST" action="">
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="add">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">School Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
                         </div>
                         <div class="mb-3">
-                            <label for="schoolAddress" class="form-label">Full Address</label>
-                            <textarea class="form-control" id="schoolAddress" rows="2" required></textarea>
+                            <label for="level" class="form-label">School Level</label>
+                            <select class="form-select" id="level" name="level" required>
+                                <option value="elementary">Elementary</option>
+                                <option value="middle">Middle School</option>
+                                <option value="high">High School</option>
+                                <option value="college">College/University</option>
+                            </select>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="contactPerson" class="form-label">Contact Person</label>
-                                <input type="text" class="form-control" id="contactPerson" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="contactEmail" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="contactEmail" required>
-                            </div>
+                        <div class="mb-3">
+                            <label for="region" class="form-label">Region</label>
+                            <select class="form-select" id="region" name="region" required>
+                                <option value="north">North</option>
+                                <option value="south">South</option>
+                                <option value="east">East</option>
+                                <option value="west">West</option>
+                                <option value="central">Central</option>
+                            </select>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="contactPhone" class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="contactPhone" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="schoolWebsite" class="form-label">Website (optional)</label>
-                                <input type="url" class="form-control" id="schoolWebsite">
-                            </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" required></textarea>
                         </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary">Add School</button>
-                </div>
+                        <div class="mb-3">
+                            <label for="contact_person" class="form-label">Contact Person</label>
+                            <input type="text" class="form-control" id="contact_person" name="contact_person" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add School</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle with Popper -->
+    <!-- Edit School Modal -->
+    <div class="modal fade" id="editSchoolModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit School</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="">
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="id" id="edit_id">
+                        <div class="mb-3">
+                            <label for="edit_name" class="form-label">School Name</label>
+                            <input type="text" class="form-control" id="edit_name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_level" class="form-label">School Level</label>
+                            <select class="form-select" id="edit_level" name="level" required>
+                                <option value="elementary">Elementary</option>
+                                <option value="middle">Middle School</option>
+                                <option value="high">High School</option>
+                                <option value="college">College/University</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_region" class="form-label">Region</label>
+                            <select class="form-select" id="edit_region" name="region" required>
+                                <option value="north">North</option>
+                                <option value="south">South</option>
+                                <option value="east">East</option>
+                                <option value="west">West</option>
+                                <option value="central">Central</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_address" class="form-label">Address</label>
+                            <textarea class="form-control" id="edit_address" name="address" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_contact_person" class="form-label">Contact Person</label>
+                            <input type="text" class="form-control" id="edit_contact_person" name="contact_person" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="edit_email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="edit_phone" name="phone" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update School</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete School Modal -->
+    <div class="modal fade" id="deleteSchoolModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete School</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="">
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" id="delete_id">
+                        <p>Are you sure you want to delete <span id="delete_school_name" class="fw-bold"></span>?</p>
+                        <p class="text-danger">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete School</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    
     <script>
         $(document).ready(function() {
             // Initialize DataTable
-            $('#schoolsTable').DataTable({
-                responsive: true,
-                lengthMenu: [10, 25, 50, 100],
-                pageLength: 10
+            var table = $('#schoolsTable').DataTable({
+                "paging": true,
+                "lengthChange": false,
+                "searching": false,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true
             });
-            
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
+
+            // Handle view toggle buttons
+            $('.view-toggle').click(function() {
+                var view = $(this).data('view');
+                if (view === 'table') {
+                    $('#tableView').show();
+                    $('#cardView').hide();
+                    $('.view-toggle').removeClass('active');
+                    $(this).addClass('active');
+                } else if (view === 'card') {
+                    $('#tableView').hide();
+                    $('#cardView').show();
+                    $('.view-toggle').removeClass('active');
+                    $(this).addClass('active');
+                }
             });
-            
-            // Toggle between table and card view
-            $('#tableViewBtn').click(function() {
-                $('#tableView').show();
-                $('#cardView').hide();
-                $(this).addClass('active');
-                $('#cardViewBtn').removeClass('active');
+
+            // Handle filter form submission
+            $('#filterForm').on('submit', function(e) {
+                e.preventDefault();
+                var level = $('#levelFilter').val();
+                var region = $('#regionFilter').val();
+                var search = $('#searchFilter').val().toLowerCase();
+
+                // Filter table view
+                table.column(2).search(level).draw();
+                table.column(3).search(region).draw();
+                table.search(search).draw();
+
+                // Filter card view
+                $('.school-card').each(function() {
+                    var cardLevel = $(this).find('p:contains("Level:")').text().toLowerCase().replace('level:', '').trim();
+                    var cardRegion = $(this).find('p:contains("Location:")').text().toLowerCase().replace('location:', '').trim();
+                    var cardName = $(this).find('.card-header h5').text().toLowerCase();
+                    var cardContact = $(this).find('p:contains("Contact:")').text().toLowerCase().replace('contact:', '').trim();
+                    var cardEmail = $(this).find('p:contains("Email:")').text().toLowerCase().replace('email:', '').trim();
+
+                    var levelMatch = level === '' || cardLevel.includes(level);
+                    var regionMatch = region === '' || cardRegion.includes(region);
+                    var searchMatch = search === '' || 
+                        cardName.includes(search) || 
+                        cardContact.includes(search) || 
+                        cardEmail.includes(search);
+
+                    $(this).closest('.col-md-4').toggle(levelMatch && regionMatch && searchMatch);
+                });
             });
-            
-            $('#cardViewBtn').click(function() {
-                $('#tableView').hide();
-                $('#cardView').show();
-                $(this).addClass('active');
-                $('#tableViewBtn').removeClass('active');
+
+            // Handle reset button
+            $('#resetFilters').click(function() {
+                $('#filterForm')[0].reset();
+                table.search('').columns().search('').draw();
+                $('.school-card').closest('.col-md-4').show();
+            });
+
+            // Handle edit button click
+            $('.edit-school').click(function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                var level = $(this).data('level');
+                var region = $(this).data('region');
+                var address = $(this).data('address');
+                var contact = $(this).data('contact');
+                var email = $(this).data('email');
+                var phone = $(this).data('phone');
+
+                $('#editSchoolId').val(id);
+                $('#editSchoolName').val(name);
+                $('#editSchoolLevel').val(level);
+                $('#editSchoolRegion').val(region);
+                $('#editSchoolAddress').val(address);
+                $('#editSchoolContact').val(contact);
+                $('#editSchoolEmail').val(email);
+                $('#editSchoolPhone').val(phone);
+            });
+
+            // Handle delete button click
+            $('.delete-school').click(function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                $('#deleteSchoolId').val(id);
+                $('#deleteSchoolName').text(name);
             });
         });
     </script>
