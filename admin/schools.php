@@ -369,7 +369,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                                 <td><?php echo htmlspecialchars($school['email']); ?></td>
                                                 <td><?php echo htmlspecialchars($school['phone']); ?></td>
                                                 <td class="table-actions">
-                                                    <button type="button" class="btn btn-sm btn-primary" 
+                                                    <button type="button" class="btn btn-sm btn-primary edit-school" 
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#editSchoolModal"
                                                             data-id="<?php echo $school['id']; ?>"
@@ -382,7 +382,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                                             data-phone="<?php echo htmlspecialchars($school['phone']); ?>">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                    <button type="button" class="btn btn-sm btn-danger delete-school" 
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#deleteSchoolModal"
                                                             data-id="<?php echo $school['id']; ?>"
@@ -429,7 +429,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                                     data-phone="<?php echo htmlspecialchars($school['phone']); ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-danger" 
+                                            <button type="button" class="btn btn-sm btn-danger delete-school" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#deleteSchoolModal"
                                                     data-id="<?php echo $school['id']; ?>"
@@ -675,22 +675,22 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                 var email = $(this).data('email');
                 var phone = $(this).data('phone');
 
-                $('#editSchoolId').val(id);
-                $('#editSchoolName').val(name);
-                $('#editSchoolLevel').val(level);
-                $('#editSchoolRegion').val(region);
-                $('#editSchoolAddress').val(address);
-                $('#editSchoolContact').val(contact);
-                $('#editSchoolEmail').val(email);
-                $('#editSchoolPhone').val(phone);
+                $('#edit_id').val(id);
+                $('#edit_name').val(name);
+                $('#edit_level').val(level);
+                $('#edit_region').val(region);
+                $('#edit_address').val(address);
+                $('#edit_contact_person').val(contact);
+                $('#edit_email').val(email);
+                $('#edit_phone').val(phone);
             });
 
             // Handle delete button click
             $('.delete-school').click(function() {
                 var id = $(this).data('id');
                 var name = $(this).data('name');
-                $('#deleteSchoolId').val(id);
-                $('#deleteSchoolName').text(name);
+                $('#delete_id').val(id);
+                $('#delete_school_name').text(name);
             });
         });
     </script>
