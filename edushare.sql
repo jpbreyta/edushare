@@ -2,178 +2,307 @@
 CREATE DATABASE IF NOT EXISTS edushare;
 USE edushare;
 
--- Create users table first (needed for foreign keys)
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS donations;
+DROP TABLE IF EXISTS resources;
+DROP TABLE IF EXISTS schools;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS activity_logs;
+
+-- Create users table
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    user_type ENUM('admin', 'school', 'donor') NOT NULL,
-    school_id INT,
-    status ENUM('active', 'inactive') DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    user_type ENUM('admin', 'school_admin', 'donor', 'teacher') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Create schools table
-CREATE TABLE IF NOT EXISTS `schools` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `level` enum('elementary','middle','high','college') NOT NULL,
-  `region` enum('north','south','east','west','central') NOT NULL,
-  `address` text NOT NULL,
-  `contact_person` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `phone` varchar(20) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci; 
-
--- Create resource_categories table
-CREATE TABLE IF NOT EXISTS resource_categories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE schools (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    level ENUM('primary', 'secondary', 'tertiary') NOT NULL,
+    region VARCHAR(100) NOT NULL,
+    address TEXT NOT NULL,
+    contact_person VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Create resources table
-CREATE TABLE IF NOT EXISTS resources (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE resources (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    category_id INT NOT NULL,
-    resource_type ENUM('document', 'video', 'link', 'other') NOT NULL,
+    resource_type ENUM('textbook', 'ebook', 'video', 'other') NOT NULL,
     file_path VARCHAR(255),
-    external_link VARCHAR(255),
-    target_audience VARCHAR(50),
-    uploaded_by INT NOT NULL,
+    uploader_id INT,
     school_id INT,
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES resource_categories(id),
-    FOREIGN KEY (uploaded_by) REFERENCES users(id),
-    FOREIGN KEY (school_id) REFERENCES schools(id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (uploader_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE SET NULL
 );
 
 -- Create donations table
-CREATE TABLE IF NOT EXISTS donations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    donor_name VARCHAR(100) NOT NULL,
-    donor_email VARCHAR(100) NOT NULL,
-    resource_type ENUM('document', 'video', 'link', 'other') NOT NULL,
+CREATE TABLE donations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    file_path VARCHAR(255),
-    external_link VARCHAR(255),
-    school_id INT NOT NULL,
-    donation_date DATE NOT NULL,
-    purpose TEXT NOT NULL,
+    amount DECIMAL(10,2),
+    donor_id INT,
+    school_id INT,
     status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
-    notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (school_id) REFERENCES schools(id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (donor_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE SET NULL
 );
 
--- Create resource_downloads table
-CREATE TABLE IF NOT EXISTS resource_downloads (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    resource_id INT NOT NULL,
-    user_id INT NOT NULL,
-    downloaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Create remember_tokens table
-CREATE TABLE IF NOT EXISTS remember_tokens (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    token VARCHAR(255) NOT NULL,
-    expires_at DATETIME NOT NULL,
+-- Create activity_logs table
+CREATE TABLE activity_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    action VARCHAR(50) NOT NULL,
+    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Create bookmarks table
-CREATE TABLE IF NOT EXISTS bookmarks (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    resource_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
-);
-
--- Create feedback table
-CREATE TABLE IF NOT EXISTS feedback (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    resource_id INT NOT NULL,
-    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
-);
-
--- Create resource_access table
-CREATE TABLE IF NOT EXISTS resource_access (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    resource_id INT NOT NULL,
-    user_id INT NOT NULL,
-    access_type ENUM('view', 'download', 'edit') NOT NULL,
-    granted_by INT NOT NULL,
-    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at DATETIME,
-    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (granted_by) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Insert default admin user
-INSERT INTO users (name, username, email, password, user_type) 
-VALUES ('Admin User', 'admin', 'admin@edushare.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+INSERT INTO users (name, email, password, user_type) VALUES 
+('Admin User', 'admin@edushare.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
 
--- Insert default resource categories
-INSERT INTO resource_categories (name, description) VALUES
-('Textbooks', 'Educational textbooks and reference materials'),
-('Worksheets', 'Practice worksheets and exercises'),
-('Videos', 'Educational videos and tutorials'),
-('Presentations', 'Slide presentations and lecture materials'),
-('Lesson Plans', 'Teacher lesson plans and guides'),
-('Assessments', 'Tests, quizzes, and assessment materials'),
-('Activities', 'Classroom activities and projects'),
-('Other', 'Other educational resources');
+-- Create stored procedures for schools
+DELIMITER //
 
--- Insert sample schools
-INSERT INTO schools (name, level, region, address, contact_person, email, phone) VALUES
-('Green Valley Primary School', 'primary', 'Central', '123 Education Street, Green Valley', 'John Smith', 'gvps@example.com', '1234567890'),
-('Sunshine Secondary School', 'secondary', 'East', '456 Learning Avenue, Sunshine', 'Sarah Johnson', 'sunshine@example.com', '2345678901'),
-('Mountain View High School', 'secondary', 'West', '789 Knowledge Road, Mountain View', 'Michael Brown', 'mvhs@example.com', '3456789012'),
-('Riverside Elementary', 'primary', 'North', '321 Wisdom Lane, Riverside', 'Emily Davis', 'riverside@example.com', '4567890123'),
-('Oceanview College', 'tertiary', 'South', '654 Academic Boulevard, Oceanview', 'David Wilson', 'oceanview@example.com', '5678901234');
+CREATE PROCEDURE sp_get_all_schools()
+BEGIN
+    SELECT * FROM schools ORDER BY name;
+END //
 
--- Insert sample resources
-INSERT INTO resources (title, description, category_id, resource_type, file_path, target_audience, uploaded_by, school_id, status) VALUES
-('Mathematics Grade 5 Workbook', 'Comprehensive workbook covering basic arithmetic and geometry', 1, 'document', '/uploads/math_grade5.pdf', 'Primary', 1, 1, 'approved'),
-('Science Experiments Video Series', '10 engaging science experiments for middle school students', 3, 'video', '/uploads/science_experiments.mp4', 'Secondary', 1, 2, 'approved'),
-('English Grammar Worksheets', 'Practice worksheets for English grammar concepts', 2, 'document', '/uploads/grammar_worksheets.pdf', 'Primary', 1, 1, 'approved'),
-('History Presentation: Ancient Civilizations', 'Interactive presentation on ancient civilizations', 4, 'document', '/uploads/ancient_civs.pptx', 'Secondary', 1, 2, 'approved'),
-('Physics Lab Manual', 'Complete physics laboratory manual for high school', 1, 'document', '/uploads/physics_lab.pdf', 'Secondary', 1, 3, 'approved'),
-('Art Activities Collection', 'Creative art activities for primary students', 7, 'document', '/uploads/art_activities.pdf', 'Primary', 1, 4, 'approved'),
-('Chemistry Video Tutorials', 'Video tutorials covering basic chemistry concepts', 3, 'video', '/uploads/chemistry_tutorials.mp4', 'Secondary', 1, 2, 'approved'),
-('Geography Quiz Bank', 'Collection of geography quizzes and assessments', 6, 'document', '/uploads/geography_quizzes.pdf', 'Secondary', 1, 3, 'approved');
+CREATE PROCEDURE sp_add_school(
+    IN p_name VARCHAR(100),
+    IN p_level ENUM('primary', 'secondary', 'tertiary'),
+    IN p_region VARCHAR(100),
+    IN p_address TEXT,
+    IN p_contact_person VARCHAR(100),
+    IN p_email VARCHAR(100),
+    IN p_phone VARCHAR(20)
+)
+BEGIN
+    INSERT INTO schools (name, level, region, address, contact_person, email, phone)
+    VALUES (p_name, p_level, p_region, p_address, p_contact_person, p_email, p_phone);
+    SELECT LAST_INSERT_ID() as id;
+END //
 
--- Insert sample donations
-INSERT INTO donations (donor_name, donor_email, resource_type, title, description, school_id, donation_date, purpose, status) VALUES
-('ABC Publishing', 'contact@abcpublishing.com', 'document', 'Mathematics Textbooks', 'Set of 50 mathematics textbooks for primary students', 1, '2024-01-15', 'Support primary education', 'completed'),
-('TechEd Solutions', 'info@teched.com', 'video', 'Science Learning Videos', 'Collection of 20 educational science videos', 2, '2024-02-01', 'Enhance science education', 'in_progress'),
-('Book Donors Inc', 'donate@bookdonors.org', 'document', 'Library Books', 'Collection of 100 children\'s books', 4, '2024-01-20', 'Expand school library', 'completed'),
-('EduTech Foundation', 'contact@edutech.org', 'link', 'Online Learning Platform', 'Access to premium online learning resources', 3, '2024-02-10', 'Digital education support', 'pending'),
-('Local Business Association', 'info@localbusiness.org', 'other', 'Educational Supplies', 'Various school supplies and materials', 1, '2024-01-25', 'General school support', 'completed'),
-('Science Foundation', 'donate@sciencefoundation.org', 'document', 'Science Lab Equipment', 'Set of laboratory equipment and manuals', 2, '2024-02-05', 'Enhance science facilities', 'in_progress'),
-('Community Group', 'contact@communitygroup.org', 'other', 'Sports Equipment', 'Various sports equipment for physical education', 4, '2024-01-30', 'Support physical education', 'completed'),
-('Tech Company', 'donate@techcompany.com', 'video', 'Coding Tutorials', 'Series of programming tutorials for students', 3, '2024-02-15', 'Promote digital literacy', 'pending'); 
+CREATE PROCEDURE sp_update_school(
+    IN p_id INT,
+    IN p_name VARCHAR(100),
+    IN p_level ENUM('primary', 'secondary', 'tertiary'),
+    IN p_region VARCHAR(100),
+    IN p_address TEXT,
+    IN p_contact_person VARCHAR(100),
+    IN p_email VARCHAR(100),
+    IN p_phone VARCHAR(20)
+)
+BEGIN
+    UPDATE schools 
+    SET name = p_name,
+        level = p_level,
+        region = p_region,
+        address = p_address,
+        contact_person = p_contact_person,
+        email = p_email,
+        phone = p_phone
+    WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_delete_school(IN p_id INT)
+BEGIN
+    DELETE FROM schools WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_get_school_by_id(IN p_id INT)
+BEGIN
+    SELECT * FROM schools WHERE id = p_id;
+END //
+
+-- Create stored procedures for resources
+CREATE PROCEDURE sp_get_all_resources()
+BEGIN
+    SELECT r.*, u.name as uploader_name, s.name as school_name
+    FROM resources r
+    LEFT JOIN users u ON r.uploader_id = u.id
+    LEFT JOIN schools s ON r.school_id = s.id
+    ORDER BY r.created_at DESC;
+END //
+
+CREATE PROCEDURE sp_add_resource(
+    IN p_title VARCHAR(255),
+    IN p_description TEXT,
+    IN p_resource_type ENUM('textbook', 'ebook', 'video', 'other'),
+    IN p_file_path VARCHAR(255),
+    IN p_uploader_id INT,
+    IN p_school_id INT
+)
+BEGIN
+    INSERT INTO resources (title, description, resource_type, file_path, uploader_id, school_id)
+    VALUES (p_title, p_description, p_resource_type, p_file_path, p_uploader_id, p_school_id);
+    SELECT LAST_INSERT_ID() as id;
+END //
+
+CREATE PROCEDURE sp_update_resource(
+    IN p_id INT,
+    IN p_title VARCHAR(255),
+    IN p_description TEXT,
+    IN p_resource_type ENUM('textbook', 'ebook', 'video', 'other'),
+    IN p_file_path VARCHAR(255),
+    IN p_status ENUM('pending', 'approved', 'rejected')
+)
+BEGIN
+    UPDATE resources 
+    SET title = p_title,
+        description = p_description,
+        resource_type = p_resource_type,
+        file_path = p_file_path,
+        status = p_status
+    WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_delete_resource(IN p_id INT)
+BEGIN
+    DELETE FROM resources WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_get_resource_by_id(IN p_id INT)
+BEGIN
+    SELECT r.*, u.name as uploader_name, s.name as school_name
+    FROM resources r
+    LEFT JOIN users u ON r.uploader_id = u.id
+    LEFT JOIN schools s ON r.school_id = s.id
+    WHERE r.id = p_id;
+END //
+
+-- Create stored procedures for donations
+CREATE PROCEDURE sp_get_all_donations()
+BEGIN
+    SELECT d.*, u.name as donor_name, s.name as school_name
+    FROM donations d
+    LEFT JOIN users u ON d.donor_id = u.id
+    LEFT JOIN schools s ON d.school_id = s.id
+    ORDER BY d.created_at DESC;
+END //
+
+CREATE PROCEDURE sp_add_donation(
+    IN p_title VARCHAR(255),
+    IN p_description TEXT,
+    IN p_amount DECIMAL(10,2),
+    IN p_donor_id INT,
+    IN p_school_id INT
+)
+BEGIN
+    INSERT INTO donations (title, description, amount, donor_id, school_id)
+    VALUES (p_title, p_description, p_amount, p_donor_id, p_school_id);
+    SELECT LAST_INSERT_ID() as id;
+END //
+
+CREATE PROCEDURE sp_update_donation(
+    IN p_id INT,
+    IN p_title VARCHAR(255),
+    IN p_description TEXT,
+    IN p_amount DECIMAL(10,2),
+    IN p_status ENUM('pending', 'in_progress', 'completed', 'cancelled')
+)
+BEGIN
+    UPDATE donations 
+    SET title = p_title,
+        description = p_description,
+        amount = p_amount,
+        status = p_status
+    WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_delete_donation(IN p_id INT)
+BEGIN
+    DELETE FROM donations WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_get_donation_by_id(IN p_id INT)
+BEGIN
+    SELECT d.*, u.name as donor_name, s.name as school_name
+    FROM donations d
+    LEFT JOIN users u ON d.donor_id = u.id
+    LEFT JOIN schools s ON d.school_id = s.id
+    WHERE d.id = p_id;
+END //
+
+-- Create stored procedures for users
+CREATE PROCEDURE sp_get_all_users()
+BEGIN
+    SELECT * FROM users ORDER BY name;
+END //
+
+CREATE PROCEDURE sp_add_user(
+    IN p_name VARCHAR(100),
+    IN p_email VARCHAR(100),
+    IN p_password VARCHAR(255),
+    IN p_user_type ENUM('admin', 'school_admin', 'donor', 'teacher')
+)
+BEGIN
+    INSERT INTO users (name, email, password, user_type)
+    VALUES (p_name, p_email, p_password, p_user_type);
+    SELECT LAST_INSERT_ID() as id;
+END //
+
+CREATE PROCEDURE sp_update_user(
+    IN p_id INT,
+    IN p_name VARCHAR(100),
+    IN p_email VARCHAR(100),
+    IN p_user_type ENUM('admin', 'school_admin', 'donor', 'teacher')
+)
+BEGIN
+    UPDATE users 
+    SET name = p_name,
+        email = p_email,
+        user_type = p_user_type
+    WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_delete_user(IN p_id INT)
+BEGIN
+    DELETE FROM users WHERE id = p_id;
+    SELECT ROW_COUNT() as affected_rows;
+END //
+
+CREATE PROCEDURE sp_get_user_by_id(IN p_id INT)
+BEGIN
+    SELECT * FROM users WHERE id = p_id;
+END //
+
+-- Create stored procedure for activity logs
+CREATE PROCEDURE sp_add_activity_log(
+    IN p_user_id INT,
+    IN p_action VARCHAR(50),
+    IN p_description TEXT
+)
+BEGIN
+    INSERT INTO activity_logs (user_id, action, description)
+    VALUES (p_user_id, p_action, p_description);
+    SELECT LAST_INSERT_ID() as id;
+END //
+
+DELIMITER ;
