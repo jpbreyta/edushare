@@ -3,12 +3,10 @@
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
 
-// Get filter parameters
 $category = isset($_GET['category']) ? sanitize_input($_GET['category']) : '';
 $audience = isset($_GET['audience']) ? sanitize_input($_GET['audience']) : '';
 $search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
 
-// Build query
 $query = "SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
           FROM resources r 
           JOIN users u ON r.uploaded_by = u.id 
@@ -38,7 +36,6 @@ if (!empty($search)) {
 
 $query .= " ORDER BY r.upload_date DESC";
 
-// Prepare and execute query
 $stmt = $conn->prepare($query);
 if (!empty($params)) {
     $stmt->bind_param($types, ...$params);

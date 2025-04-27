@@ -2,14 +2,12 @@
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
 
-// Check if resource ID is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     redirect("resources.php");
 }
 
 $resource_id = $_GET['id'];
 
-// Get resource details
 $stmt = $conn->prepare("SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
                        FROM resources r 
                        JOIN users u ON r.uploaded_by = u.id 
@@ -24,18 +22,15 @@ if ($result->num_rows === 0) {
 
 $resource = $result->fetch_assoc();
 
-// Log access if user is logged in
 if (is_logged_in()) {
     $user_id = $_SESSION['user_id'];
     
-    // Check if already logged
     $check_stmt = $conn->prepare("SELECT id FROM resource_access WHERE user_id = ? AND resource_id = ? AND access_date > DATE_SUB(NOW(), INTERVAL 1 DAY)");
     $check_stmt->bind_param("ii", $user_id, $resource_id);
     $check_stmt->execute();
     $check_result = $check_stmt->get_result();
     
     if ($check_result->num_rows == 0) {
-        // Log new access
         $log_stmt = $conn->prepare("INSERT INTO resource_access (user_id, resource_id) VALUES (?, ?)");
         $log_stmt->bind_param("ii", $user_id, $resource_id);
         $log_stmt->execute();
@@ -49,16 +44,12 @@ if (is_logged_in()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $resource['title']; ?> - EduShare</title>
-    
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
 </head>
 <body>
     <div class="container">
-        <!-- Back Button -->
         <div class="row">
             <div class="col-md-12">
                 <a href="javascript:history.back()" class="btn btn-secondary back-btn">
@@ -97,17 +88,14 @@ if (is_logged_in()) {
                                 <?php
                                 $file_extension = get_file_extension($resource['file_path']);
                                 if (in_array($file_extension, ['jpg', 'jpeg', 'png'])) {
-                                    // Image preview
                                     echo '<div class="preview-container text-center mb-3">';
                                     echo '<img src="../' . $resource['file_path'] . '" class="img-fluid" alt="' . $resource['title'] . '" style="max-height: 500px;">';
                                     echo '</div>';
                                 } elseif (in_array($file_extension, ['pdf'])) {
-                                    // PDF preview
                                     echo '<div class="preview-container embed-responsive mb-3" style="height: 600px;">';
                                     echo '<embed src="../' . $resource['file_path'] . '" type="application/pdf" width="100%" height="100%">';
                                     echo '</div>';
                                 } else {
-                                    // No preview available
                                     echo '<div class="text-center p-5 mb-3 preview-container">';
                                     echo '<i class="fas fa-file file-icon"></i>';
                                     echo '<p class="mb-0">Preview not available for this file type.</p>';
@@ -173,7 +161,6 @@ if (is_logged_in()) {
                     </div>
                 </div>
                 
-                <!-- Back button for mobile view -->
                 <div class="d-block d-md-none mobile-back-btn">
                     <a href="javascript:history.back()" class="btn btn-secondary w-100">
                         <i class="fas fa-arrow-left me-2"></i> Back to Previous Page

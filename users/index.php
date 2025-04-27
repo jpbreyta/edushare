@@ -2,16 +2,13 @@
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
 
-// Check if user is logged in
 if (!is_logged_in()) {
     redirect("../auth/login.php");
 }
 
-// Get user statistics
 $user_id = $_SESSION['user_id'];
 $user_type = $_SESSION['user_type'];
 
-// Get uploaded resources count (for donors and schools)
 $uploaded_count = 0;
 if ($user_type == 'donor' || $user_type == 'school' || $user_type == 'admin') {
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM resources WHERE uploaded_by = ?");
@@ -23,7 +20,6 @@ if ($user_type == 'donor' || $user_type == 'school' || $user_type == 'admin') {
     }
 }
 
-// Get downloaded/accessed resources count
 $accessed_count = 0;
 $stmt = $conn->prepare("SELECT COUNT(*) as count FROM resource_access WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
@@ -33,7 +29,6 @@ if ($row = $result->fetch_assoc()) {
     $accessed_count = $row['count'];
 }
 
-// Get recent resources
 $stmt = $conn->prepare("SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
                        FROM resources r 
                        JOIN users u ON r.uploaded_by = u.id 
