@@ -7,39 +7,12 @@ $category = isset($_GET['category']) ? sanitize_input($_GET['category']) : '';
 $audience = isset($_GET['audience']) ? sanitize_input($_GET['audience']) : '';
 $search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
 
-$query = "SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
-          FROM resources r 
-          JOIN users u ON r.uploaded_by = u.id 
-          WHERE r.is_visible = 1";
-$params = [];
-$types = "";
+$category = $category !== '' ? $category : null;
+$audience = $audience !== '' ? $audience : null;
+$search = $search !== '' ? $search : null;
 
-if (!empty($category)) {
-    $query .= " AND r.category = ?";
-    $params[] = $category;
-    $types .= "s";
-}
-
-if (!empty($audience)) {
-    $query .= " AND r.target_audience = ?";
-    $params[] = $audience;
-    $types .= "s";
-}
-
-if (!empty($search)) {
-    $query .= " AND (r.title LIKE ? OR r.description LIKE ?)";
-    $search_param = "%$search%";
-    $params[] = $search_param;
-    $params[] = $search_param;
-    $types .= "ss";
-}
-
-$query .= " ORDER BY r.upload_date DESC";
-
-$stmt = $conn->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
+$stmt = $conn->prepare("CALL GetFilteredResources(?, ?, ?)");
+$stmt->bind_param("sss", $category, $audience, $search);
 $stmt->execute();
 $resources = $stmt->get_result();
 

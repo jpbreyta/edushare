@@ -56,8 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if (empty($error_message)) {
             $user_id = $_SESSION['user_id'];
-
-            $stmt = $conn->prepare("INSERT INTO resources (title, description, category, resource_type, file_path, external_link, target_audience, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("CALL UploadResource(?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("sssssssi", $title, $description, $category, $resource_type, $file_path, $external_link, $target_audience, $user_id);
 
             if ($stmt->execute()) {

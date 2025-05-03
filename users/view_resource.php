@@ -7,11 +7,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 }
 
 $resource_id = $_GET['id'];
-
-$stmt = $conn->prepare("SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
-                       FROM resources r 
-                       JOIN users u ON r.uploaded_by = u.id 
-                       WHERE r.id = ?");
+$stmt = $conn->prepare("CALL GetResourceDetails(?)");
 $stmt->bind_param("i", $resource_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -21,23 +17,32 @@ if ($result->num_rows === 0) {
 }
 
 $resource = $result->fetch_assoc();
+$stmt->close(); 
+$conn->next_result(); 
 
 if (is_logged_in()) {
     $user_id = $_SESSION['user_id'];
-    
-    $check_stmt = $conn->prepare("SELECT id FROM resource_access WHERE user_id = ? AND resource_id = ? AND access_date > DATE_SUB(NOW(), INTERVAL 1 DAY)");
+    $check_stmt = $conn->prepare("CALL CheckRecentResourceAccess(?, ?)");
     $check_stmt->bind_param("ii", $user_id, $resource_id);
     $check_stmt->execute();
     $check_result = $check_stmt->get_result();
-    
+
     if ($check_result->num_rows == 0) {
-        $log_stmt = $conn->prepare("INSERT INTO resource_access (user_id, resource_id) VALUES (?, ?)");
+        $check_stmt->close();
+        $conn->next_result(); 
+
+        $log_stmt = $conn->prepare("CALL LogResourceAccess(?, ?)");
         $log_stmt->bind_param("ii", $user_id, $resource_id);
         $log_stmt->execute();
+        $log_stmt->close();
+        $conn->next_result(); 
+    } else {
+        $check_stmt->close();
+        $conn->next_result();
     }
 }
-
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

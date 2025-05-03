@@ -205,3 +205,104 @@ CREATE TABLE feedback (
     message TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
+
+
+-- Procedure to get uploaded resources count
+DELIMITER //
+CREATE PROCEDURE GetUploadedResourcesCount(IN userId INT)
+BEGIN
+    SELECT COUNT(*) AS count FROM resources WHERE uploaded_by = userId;
+END //
+DELIMITER ;
+
+-- Procedure to get accessed resources count
+DELIMITER //
+CREATE PROCEDURE GetAccessedResourcesCount(IN userId INT)
+BEGIN
+    SELECT COUNT(*) AS count FROM resource_access WHERE user_id = userId;
+END //
+DELIMITER ;
+
+-- Procedure to get recent resources
+DELIMITER //
+CREATE PROCEDURE GetRecentResources()
+BEGIN
+    SELECT r.*, u.name AS uploader_name, u.user_type AS uploader_type 
+    FROM resources r 
+    JOIN users u ON r.uploaded_by = u.id 
+    ORDER BY r.upload_date DESC 
+    LIMIT 5;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE GetFilteredResources(
+    IN in_category VARCHAR(255),
+    IN in_audience VARCHAR(255),
+    IN in_search VARCHAR(255)
+)
+BEGIN
+    SELECT r.*, u.name AS uploader_name, u.user_type AS uploader_type
+    FROM resources r
+    JOIN users u ON r.uploaded_by = u.id
+    WHERE r.is_visible = 1
+      AND (in_category IS NULL OR r.category = in_category)
+      AND (in_audience IS NULL OR r.target_audience = in_audience)
+      AND (
+          in_search IS NULL OR 
+          r.title LIKE CONCAT('%', in_search, '%') OR 
+          r.description LIKE CONCAT('%', in_search, '%')
+      )
+    ORDER BY r.upload_date DESC;
+END //
+DELIMITER ;
+
+-- Inserting value -- 
+DELIMITER //
+CREATE PROCEDURE UploadResource(
+    IN in_title VARCHAR(255),
+    IN in_description TEXT,
+    IN in_category VARCHAR(255),
+    IN in_resource_type VARCHAR(50),
+    IN in_file_path VARCHAR(500),
+    IN in_external_link VARCHAR(500),
+    IN in_target_audience VARCHAR(255),
+    IN in_uploaded_by INT
+)
+BEGIN
+    INSERT INTO resources (
+        title, description, category, resource_type, file_path, external_link, target_audience, uploaded_by
+    ) VALUES (
+        in_title, in_description, in_category, in_resource_type, in_file_path, in_external_link, in_target_audience, in_uploaded_by
+    );
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE GetResourceDetails(IN in_resource_id INT)
+BEGIN
+    SELECT r.*, u.name AS uploader_name, u.user_type AS uploader_type
+    FROM resources r
+    JOIN users u ON r.uploaded_by = u.id
+    WHERE r.id = in_resource_id;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE CheckRecentResourceAccess(IN in_user_id INT, IN in_resource_id INT)
+BEGIN
+    SELECT id 
+    FROM resource_access 
+    WHERE user_id = in_user_id 
+      AND resource_id = in_resource_id 
+      AND access_date > DATE_SUB(NOW(), INTERVAL 1 DAY);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE LogResourceAccess(IN in_user_id INT, IN in_resource_id INT)
+BEGIN
+    INSERT INTO resource_access (user_id, resource_id)
+    VALUES (in_user_id, in_resource_id);
+END //
+DELIMITER ;
