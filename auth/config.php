@@ -1,5 +1,12 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
+// Session configuration - only set if session hasn't started
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
+}
+
+require_once 'C:/xampp/htdocs/ADBMS/vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
@@ -7,13 +14,13 @@ $dotenv->load();
 $google_client = new Google\Client();
 $google_client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
 $google_client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
-$google_client->setRedirectUri('http://localhost/auth/google_callback.php');
+$google_client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI'] ?? 'http://localhost/ADBMS/auth/google_callback.php');
 $google_client->addScope("email");
 $google_client->addScope("profile");
 
 // Application configuration
 define('APP_NAME', 'EduShare');
-define('APP_URL', 'http://localhost/ADBMS - Copy');
+define('APP_URL', 'http://localhost/ADBMS');
 define('UPLOAD_DIR', '../uploads/');
 
 // File upload settings
@@ -24,11 +31,6 @@ define('ALLOWED_FILE_TYPES', [
     'xls', 'xlsx',
     'ppt', 'pptx'
 ]);
-
-// Session configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
 
 // Error reporting
 error_reporting(E_ALL);

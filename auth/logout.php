@@ -1,5 +1,6 @@
 <?php
 require_once 'auth_functions.php';
+require_once 'db_connect.php';
 
 $_SESSION = array();
 
@@ -12,16 +13,14 @@ if (ini_get("session.use_cookies")) {
 }
 
 if (isset($_COOKIE['remember_token'])) {
-    setcookie("remember_token", "", time() - 3600, "/", "", true, true);
-    
-    // Also remove from database if you have a database connection here
-    // require_once 'db_connect.php';
-    // $token = $_COOKIE['remember_token'];
-    // $stmt = $conn->prepare("DELETE FROM remember_tokens WHERE token = ?");
-    // $stmt->bind_param("s", $token);
-    // $stmt->execute();
-}
+    $token = $_COOKIE['remember_token'];
 
+    $stmt = $conn->prepare("DELETE FROM remember_tokens WHERE token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+
+    setcookie("remember_token", "", time() - 3600, "/", "", true, true);
+}
 
 session_destroy();
 

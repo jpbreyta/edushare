@@ -8,13 +8,13 @@ $success_message = "";
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get & sanitize form data
-    $name            = sanitize_input($_POST['name']);
-    $username        = sanitize_input($_POST['username']);
-    $email           = sanitize_input($_POST['email']);
-    $password        = sanitize_input($_POST['password']);
-    $repeat_password = sanitize_input($_POST['repeat_password']);
-    $user_type       = sanitize_input($_POST['user_type']);
-    $organization    = sanitize_input($_POST['organization']);
+    $name            = sanitizeInput($_POST['name']);
+    $username        = sanitizeInput($_POST['username']);
+    $email           = sanitizeInput($_POST['email']);
+    $password        = sanitizeInput($_POST['password']);
+    $repeat_password = sanitizeInput($_POST['repeat_password']);
+    $user_type       = sanitizeInput($_POST['user_type']);
+    $organization    = sanitizeInput($_POST['organization']);
     
     // Validate input
     if (empty($name) || empty($username) || empty($email) || empty($password) || empty($repeat_password) || empty($user_type)) {
@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $error_message = "Username or email already exists";
         } else {
             // Hash password & insert new user
-            $hashed_password = hash_password($password);
+            $hashed_password = hashPassword($password);
             $stmt = $conn->prepare(
                 "INSERT INTO users (name, username, email, password, user_type, organization)
                  VALUES (?, ?, ?, ?, ?, ?)"

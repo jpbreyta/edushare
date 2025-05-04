@@ -365,7 +365,7 @@ if (isset($_GET['message'])) {
                                             <tr>
                                                 <td><?php echo htmlspecialchars($resource['id']); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['title']); ?></td>
-                                                <td><?php echo htmlspecialchars($resource['category_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($resource['category']); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['resource_type']); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['school_name'] ?? 'N/A'); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['target_audience']); ?></td>
@@ -374,13 +374,13 @@ if (isset($_GET['message'])) {
                                                         <?php echo ucfirst($resource['status']); ?>
                                                     </span>
                                                 </td>
-                                                <td><?php echo date('M d, Y', strtotime($resource['created_at'])); ?></td>
+                                                <td><?php echo date('M d, Y', strtotime($resource['upload_date'])); ?></td>
                                                 <td class="table-actions">
                                                     <button type="button" class="btn btn-sm btn-primary edit-resource" 
                                                             data-id="<?php echo $resource['id']; ?>"
                                                             data-title="<?php echo htmlspecialchars($resource['title']); ?>"
                                                             data-description="<?php echo htmlspecialchars($resource['description']); ?>"
-                                                            data-category-id="<?php echo $resource['category_id']; ?>"
+                                                            data-category="<?php echo htmlspecialchars($resource['category']); ?>"
                                                             data-resource-type="<?php echo htmlspecialchars($resource['resource_type']); ?>"
                                                             data-target-audience="<?php echo htmlspecialchars($resource['target_audience']); ?>"
                                                             data-school-id="<?php echo $resource['school_id']; ?>"
@@ -577,7 +577,7 @@ if (isset($_GET['message'])) {
                 var id = $(this).data('id');
                 var title = $(this).data('title');
                 var description = $(this).data('description');
-                var categoryId = $(this).data('category-id');
+                var category = $(this).data('category');
                 var resourceType = $(this).data('resource-type');
                 var targetAudience = $(this).data('target-audience');
                 var schoolId = $(this).data('school-id');
@@ -585,7 +585,7 @@ if (isset($_GET['message'])) {
                 $('#editResourceId').val(id);
                 $('#editTitle').val(title);
                 $('#editDescription').val(description);
-                $('#editCategoryId').val(categoryId);
+                $('#editCategoryId').val(category);
                 $('#editResourceType').val(resourceType);
                 $('#editTargetAudience').val(targetAudience);
                 $('#editSchoolId').val(schoolId);

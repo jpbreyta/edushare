@@ -224,6 +224,16 @@ $users = getAllUsers();
                                 <i class="fas fa-hand-holding-heart me-2"></i> Donations
                             </a>
                         </li>
+                        <li class="nav-item mt-3">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-cog me-2"></i> Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-question-circle me-2"></i> Help
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
