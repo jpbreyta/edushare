@@ -26,12 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $organization = $_POST['organization'] ?? null;
             $phone = $_POST['phone'] ?? null;
             $address = $_POST['address'] ?? null;
-            $status = $_POST['status'] ?? 'active';
             
             if (empty($name) || empty($email) || empty($password) || empty($user_type)) {
                 $error = "Please fill in all required fields.";
             } else {
-                $result = addUser($name, $email, $password, $user_type, $organization, $phone, $address, $status);
+                $result = addUser($name, $email, $password, $user_type, $organization, $phone, $address);
                 if ($result) {
                     $message = "User added successfully.";
                 } else {
@@ -48,12 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $organization = $_POST['organization'] ?? null;
             $phone = $_POST['phone'] ?? null;
             $address = $_POST['address'] ?? null;
-            $status = $_POST['status'] ?? 'active';
             
             if (empty($name) || empty($email) || empty($user_type)) {
                 $error = "Please fill in all required fields.";
             } else {
-                $result = updateUser($id, $name, $email, $user_type, $organization, $phone, $address, $status);
+                $result = updateUser($id, $name, $email, $user_type, $organization, $phone, $address);
                 if ($result) {
                     $message = "User updated successfully.";
                 } else {
@@ -96,102 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $users = getAllUsers();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - EduShare Admin</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- DataTables CSS -->
-    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4CAF50;
-            --primary-dark: #388E3C;
-            --primary-light: #C8E6C9;
-            --accent-color: #8BC34A;
-        }
-        
-        .bg-primary-custom {
-            background-color: var(--primary-color);
-        }
-        
-        .sidebar {
-            min-height: calc(100vh - 56px);
-            background-color: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-        }
-        
-        .sidebar .nav-link {
-            color: #333;
-            border-radius: 0;
-        }
-        
-        .sidebar .nav-link.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .sidebar .nav-link:hover:not(.active) {
-            background-color: var(--primary-light);
-        }
-        
-        .content-wrapper {
-            padding: 20px;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            border-color: var(--primary-dark);
-        }
-        
-        .table-actions .btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">
-                <i class="fas fa-book-open me-2"></i>EduShare Admin
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="../index.php" target="_blank">
-                            <i class="fas fa-external-link-alt me-1"></i> View Site
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['name']); ?>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-1"></i> Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i> Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="../auth/logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<?php include 'includes/header.php'; ?>
 
     <div class="container-fluid">
         <div class="row">
@@ -269,7 +172,6 @@ $users = getAllUsers();
                                         <th>Email</th>
                                         <th>Type</th>
                                         <th>Organization</th>
-                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -281,11 +183,6 @@ $users = getAllUsers();
                                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                                             <td><?php echo ucfirst($user['user_type']); ?></td>
                                             <td><?php echo htmlspecialchars($user['organization'] ?? ''); ?></td>
-                                            <td>
-                                                <span class="badge bg-<?php echo $user['status'] === 'active' ? 'success' : 'danger'; ?>">
-                                                    <?php echo ucfirst($user['status']); ?>
-                                                </span>
-                                            </td>
                                             <td class="table-actions">
                                                 <button type="button" class="btn btn-sm btn-primary edit-user" 
                                                         data-id="<?php echo $user['id']; ?>"
@@ -294,8 +191,7 @@ $users = getAllUsers();
                                                         data-type="<?php echo $user['user_type']; ?>"
                                                         data-organization="<?php echo htmlspecialchars($user['organization'] ?? ''); ?>"
                                                         data-phone="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>"
-                                                        data-address="<?php echo htmlspecialchars($user['address'] ?? ''); ?>"
-                                                        data-status="<?php echo $user['status']; ?>">
+                                                        data-address="<?php echo htmlspecialchars($user['address'] ?? ''); ?>">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-warning change-password"
@@ -371,14 +267,6 @@ $users = getAllUsers();
                             <label class="form-label">Address</label>
                             <textarea class="form-control" name="address" rows="3"></textarea>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Status</label>
-                            <select class="form-select" name="status">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -435,14 +323,6 @@ $users = getAllUsers();
                         <div class="mb-3">
                             <label class="form-label">Address</label>
                             <textarea class="form-control" name="address" id="edit_address" rows="3"></textarea>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Status</label>
-                            <select class="form-select" name="status" id="edit_status">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -523,7 +403,6 @@ $users = getAllUsers();
                 const organization = this.dataset.organization;
                 const phone = this.dataset.phone;
                 const address = this.dataset.address;
-                const status = this.dataset.status;
                 
                 document.getElementById('edit_id').value = id;
                 document.getElementById('edit_name').value = name;
@@ -532,7 +411,6 @@ $users = getAllUsers();
                 document.getElementById('edit_organization').value = organization;
                 document.getElementById('edit_phone').value = phone;
                 document.getElementById('edit_address').value = address;
-                document.getElementById('edit_status').value = status;
                 
                 new bootstrap.Modal(document.getElementById('editUserModal')).show();
             });

@@ -45,28 +45,6 @@ $school_admin_percentage = $total_user_types > 0 ? round(($user_types['school_ad
 $donor_percentage = $total_user_types > 0 ? round(($user_types['donor'] / $total_user_types) * 100) : 0;
 $teacher_percentage = $total_user_types > 0 ? round(($user_types['teacher'] / $total_user_types) * 100) : 0;
 
-// Calculate donation status distribution
-$donation_status = [
-    'pending' => 0,
-    'in_progress' => 0,
-    'completed' => 0,
-    'cancelled' => 0
-];
-
-foreach ($donations as $donation) {
-    if (isset($donation_status[$donation['status']])) {
-        $donation_status[$donation['status']]++;
-    }
-}
-
-// Calculate percentages safely
-$donation_percentages = [
-    'pending' => $total_donations > 0 ? round(($donation_status['pending'] / $total_donations) * 100) : 0,
-    'in_progress' => $total_donations > 0 ? round(($donation_status['in_progress'] / $total_donations) * 100) : 0,
-    'completed' => $total_donations > 0 ? round(($donation_status['completed'] / $total_donations) * 100) : 0,
-    'cancelled' => $total_donations > 0 ? round(($donation_status['cancelled'] / $total_donations) * 100) : 0
-];
-
 // Get recent donations
 $recent_donations = array_slice($donations, 0, 5);
 
@@ -361,35 +339,6 @@ $recent_resources = array_slice($resources, 0, 5);
                         </div>
                     </div>
                     
-                    <!-- Donation Status -->
-                    <div class="col-lg-4">
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="m-0 font-weight-bold">Donation Status</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-4">
-                                    <h6 class="small font-weight-bold">Pending <span class="float-end"><?php echo $donation_percentages['pending']; ?>%</span></h6>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: <?php echo $donation_percentages['pending']; ?>%" aria-valuenow="<?php echo $donation_status['pending']; ?>" aria-valuemin="0" aria-valuemax="<?php echo $total_donations; ?>"></div>
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <h6 class="small font-weight-bold">In Progress <span class="float-end"><?php echo $donation_percentages['in_progress']; ?>%</span></h6>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-info" role="progressbar" style="width: <?php echo $donation_percentages['in_progress']; ?>%" aria-valuenow="<?php echo $donation_status['in_progress']; ?>" aria-valuemin="0" aria-valuemax="<?php echo $total_donations; ?>"></div>
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <h6 class="small font-weight-bold">Completed <span class="float-end"><?php echo $donation_percentages['completed']; ?>%</span></h6>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: <?php echo $donation_percentages['completed']; ?>%" aria-valuenow="<?php echo $donation_status['completed']; ?>" aria-valuemin="0" aria-valuemax="<?php echo $total_donations; ?>"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- Recent Activity -->
                     <div class="col-lg-4">
                         <div class="card mb-4">
@@ -405,16 +354,6 @@ $recent_resources = array_slice($resources, 0, 5);
                                                     <h6 class="mb-0"><?php echo htmlspecialchars($donation['title']); ?></h6>
                                                     <small class="text-muted"><?php echo htmlspecialchars($donation['donor_name']); ?></small>
                                                 </div>
-                                                <span class="badge bg-<?php 
-                                                    switch($donation['status']) {
-                                                        case 'completed': echo 'success'; break;
-                                                        case 'in_progress': echo 'info'; break;
-                                                        case 'cancelled': echo 'danger'; break;
-                                                        default: echo 'warning';
-                                                    }
-                                                ?>">
-                                                    <?php echo ucfirst(str_replace('_', ' ', $donation['status'])); ?>
-                                                </span>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -438,7 +377,6 @@ $recent_resources = array_slice($resources, 0, 5);
                                         <th>Type</th>
                                         <th>Uploaded By</th>
                                         <th>School</th>
-                                        <th>Status</th>
                                         <th>Date</th>
                                     </tr>
                                 </thead>
@@ -449,17 +387,6 @@ $recent_resources = array_slice($resources, 0, 5);
                                             <td><?php echo htmlspecialchars($resource['resource_type']); ?></td>
                                             <td><?php echo htmlspecialchars($resource['uploader_name']); ?></td>
                                             <td><?php echo htmlspecialchars($resource['school_name'] ?? 'N/A'); ?></td>
-                                            <td>
-                                                <span class="badge bg-<?php 
-                                                    switch($resource['status']) {
-                                                        case 'approved': echo 'success'; break;
-                                                        case 'rejected': echo 'danger'; break;
-                                                        default: echo 'warning';
-                                                    }
-                                                ?>">
-                                                    <?php echo ucfirst($resource['status']); ?>
-                                                </span>
-                                            </td>
                                             <td><?php echo date('M d, Y', strtotime($resource['upload_date'])); ?></td>
                                         </tr>
                                     <?php endforeach; ?>

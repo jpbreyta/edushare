@@ -46,12 +46,12 @@ function getAllUsers() {
     return $users;
 }
 
-function addUser($name, $email, $password, $user_type, $organization = null, $phone = null, $address = null, $status = 'active') {
+function addUser($name, $email, $password, $user_type, $organization = null, $phone = null, $address = null) {
     global $conn;
     
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $conn->prepare("CALL sp_add_user(?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssssss", $name, $email, $hashed_password, $user_type, $organization, $phone, $address, $status);
+    $stmt = $conn->prepare("CALL sp_add_user(?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssss", $name, $email, $hashed_password, $user_type, $organization, $phone, $address);
     
     if ($stmt->execute()) {
         $result = $stmt->get_result();
@@ -63,11 +63,11 @@ function addUser($name, $email, $password, $user_type, $organization = null, $ph
     return false;
 }
 
-function updateUser($id, $name, $email, $user_type, $organization = null, $phone = null, $address = null, $status = 'active') {
+function updateUser($id, $name, $email, $user_type, $organization = null, $phone = null, $address = null) {
     global $conn;
     
-    $stmt = $conn->prepare("CALL sp_update_user(?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssssss", $id, $name, $email, $user_type, $organization, $phone, $address, $status);
+    $stmt = $conn->prepare("CALL sp_update_user(?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssss", $id, $name, $email, $user_type, $organization, $phone, $address);
     
     if ($stmt->execute()) {
         $result = $stmt->get_result();
@@ -357,17 +357,17 @@ function getAllDonations() {
     }
 }
 
-function addDonation($donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes = '') {
+function addDonation($donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes = '') {
     global $conn;
     
     try {
-        $stmt = $conn->prepare("CALL sp_add_donation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("CALL sp_add_donation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             error_log("Error preparing statement in addDonation: " . $conn->error);
             return false;
         }
         
-        $stmt->bind_param("sssssssissss", $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes);
+        $stmt->bind_param("sssssssisss", $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes);
         
         if ($stmt->execute()) {
             $result = $stmt->get_result();
@@ -383,11 +383,11 @@ function addDonation($donor_name, $donor_email, $resource_type, $title, $descrip
     }
 }
 
-function updateDonation($id, $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes = '') {
+function updateDonation($id, $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes = '') {
     global $conn;
     
-    $stmt = $conn->prepare("CALL sp_update_donation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssssisssss", $id, $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes);
+    $stmt = $conn->prepare("CALL sp_update_donation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssissss", $id, $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes);
     
     if ($stmt->execute()) {
         $result = $stmt->get_result();
