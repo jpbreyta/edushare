@@ -51,7 +51,217 @@ if (is_logged_in()) {
     <title><?php echo $resource['title']; ?> - EduShare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --primary-dark: #3a56b7;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            color: #444;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            padding: 0 20px;
+        }
+        
+        /* Card styling */
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1rem 1.25rem;
+        }
+        
+        .card-header.bg-primary-custom {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Breadcrumb styling */
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0.75rem 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-item a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        /* Button styling */
+        .btn {
+            border-radius: 6px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #717484;
+            border-color: #717484;
+        }
+        
+        /* Back button styling */
+        .back-btn {
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        /* Resource preview styling */
+        .resource-preview {
+            background-color: #f8f9fc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .preview-container {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* File icon styling */
+        .file-icon {
+            color: var(--primary-color);
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* List group styling */
+        .list-group-item {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-group-item i {
+            color: var(--primary-color);
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Description styling */
+        .resource-description {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        /* Media preview responsiveness */
+        .embed-responsive {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .embed-responsive::before {
+            content: "";
+            display: block;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+        }
+        
+        .embed-responsive embed,
+        .embed-responsive iframe,
+        .embed-responsive object,
+        .embed-responsive video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        
+        /* Audio player styling */
+        audio {
+            width: 100%;
+            border-radius: 30px;
+            outline: none;
+        }
+        
+        /* Download button styling */
+        .download-btn {
+            margin-top: 1.5rem;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 767.98px) {
+            .card-header h4 {
+                font-size: 1.25rem;
+            }
+            
+            .resource-preview {
+                padding: 1rem;
+            }
+            
+            .mobile-back-btn {
+                margin-top: 1.5rem;
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">

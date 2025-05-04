@@ -63,8 +63,9 @@ include './includes/header.php';
                             <option value="cabe" <?php echo $audience == 'cabe' ? 'selected' : ''; ?>>CABE</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    <div class="col-md-2 d-flex align-items-start gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">Filter</button>
+                        <a href="upload_form.php" class="btn btn-success flex-fill">Upload</a>
                     </div>
                 </form>
             </div>
@@ -102,10 +103,13 @@ include './includes/header.php';
                             on <?php echo date('M d, Y', strtotime($resource['upload_date'])); ?>
                         </small></p>
                     </div>
-                    <div class="card-footer">
-                        <a href="view_resource.php?id=<?php echo $resource['id']; ?>" class="btn btn-primary">
+                    <div class="card-footer d-flex justify-content-between gap-2">
+                        <a href="view_resource.php?id=<?php echo $resource['id']; ?>" class="btn btn-primary flex-fill">
                             <i class="fas fa-eye"></i> View Details
                         </a>
+                        <button class="btn btn-outline-secondary flex-fill" title="Bookmark this resource">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
                     </div>
                 </div>
             </div>
