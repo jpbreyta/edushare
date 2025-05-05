@@ -189,4 +189,8 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
         });
     </script>
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+>>>>>>> 4e20e612149740db1b1406e2e7624151d26694c1
