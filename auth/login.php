@@ -123,7 +123,7 @@ include '../users/includes/header.php';
                                 <button type="submit" class="btn btn-primary">Sign In</button>
                             </div>
                             <div class="d-grid mt-3">
-                                <a href="../google_login.php" class="btn btn-primary">
+                                <a href="<?php echo htmlspecialchars($google_auth_url); ?>" class="btn btn-primary">
                                     <i class="fab fa-google"></i> Sign in with BSU ACCOUNT
                                 </a>
                             </div>

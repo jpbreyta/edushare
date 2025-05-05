@@ -1,9 +1,9 @@
 <?php
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
+
 $success_message = isset($_GET['success']) && !empty($_GET['success']) ? urldecode($_GET['success']) : "";
 $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_GET['error']) : "";
-
 ?>
 
 <!DOCTYPE html>
@@ -175,7 +175,7 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                 fileInput.removeAttribute("required");
             }
         }
-        
+
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 const alerts = document.querySelectorAll('.alert');
@@ -190,4 +190,3 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
     </script>
 </body>
 </html>
-

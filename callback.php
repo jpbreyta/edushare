@@ -1,13 +1,18 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/auth/config.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
 
 session_start();
 
 $client = new Google\Client();
-$client->setClientId('312842461895-hkhj6va15q0efkdqgki0hj470o7ss6mg.apps.googleusercontent.com');
-$client->setClientSecret('YOUR_CLIENT_SECRET');
-$client->setRedirectUri('http://localhost/your-project/callback.php');
+
+$client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
+$client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+$client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
 
 if (isset($_GET['code'])) {
     $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);

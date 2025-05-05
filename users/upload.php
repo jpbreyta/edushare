@@ -2,6 +2,8 @@
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
 
+// Check if user has permission to upload
+
 $error_message = "";
 $success_message = "";
 
@@ -67,7 +69,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
-
 header("Location: upload_form.php?success=" . urlencode($success_message) . "&error=" . urlencode($error_message));
 exit;
 ?>
