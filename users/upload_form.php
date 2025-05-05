@@ -2,10 +2,8 @@
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
 
-// Get any success or error messages from the redirect
 $success_message = isset($_GET['success']) && !empty($_GET['success']) ? urldecode($_GET['success']) : "";
 $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_GET['error']) : "";
-
 ?>
 
 <!DOCTYPE html>
@@ -14,10 +12,7 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Educational Resource - EduShare</title>
-    
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <style>
@@ -47,13 +42,11 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <!-- Header -->
                 <div class="header text-center">
                     <h1 class="mb-3">EduShare</h1>
                     <p class="lead">Upload educational resources to share with underprivileged schools</p>
                 </div>
-                
-                <!-- Success/Error Messages -->
+            
                 <?php if (!empty($success_message)): ?>
                 <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
                     <i class="bi bi-check-circle-fill me-2"></i> <?php echo $success_message; ?>
@@ -68,26 +61,22 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                 </div>
                 <?php endif; ?>
                 
-                <!-- Upload Form -->
                 <div class="form-container">
                     <h2 class="mb-4">Upload New Resource</h2>
                     
                     <form action="upload.php" method="POST" enctype="multipart/form-data">
-                        <!-- Title -->
                         <div class="mb-3">
                             <label for="title" class="form-label required-field">Title</label>
                             <input type="text" class="form-control" id="title" name="title" required>
                             <div class="form-text">Enter a descriptive title for your resource</div>
                         </div>
                         
-                        <!-- Description -->
                         <div class="mb-3">
                             <label for="description" class="form-label required-field">Description</label>
                             <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
                             <div class="form-text">Provide details about the resource and how it can be used</div>
                         </div>
                         
-                        <!-- Category -->
                         <div class="mb-3">
                             <label for="category" class="form-label required-field">Category</label>
                             <select class="form-select" id="category" name="category" required>
@@ -99,7 +88,6 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                             </select>
                         </div>
                         
-                        <!-- Resource Type -->
                         <div class="mb-4">
                             <label for="resource_type" class="form-label required-field">Resource Type</label>
                             <div class="form-check">
@@ -116,7 +104,6 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                             </div>
                         </div>
                         
-                        <!-- File Upload (initially hidden) -->
                         <div class="mb-3 d-none" id="file_input_group">
                             <label for="resource_file" class="form-label required-field">Upload File</label>
                             <input type="file" class="form-control" id="resource_file" name="resource_file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mp3">
@@ -126,7 +113,6 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                             </div>
                         </div>
                         
-                        <!-- External Link (initially hidden) -->
                         <div class="mb-3 d-none" id="link_input_group">
                             <label for="external_link" class="form-label required-field">External Link</label>
                             <div class="input-group">
@@ -136,7 +122,6 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                             <div class="form-text">Enter the full URL to the external resource</div>
                         </div>
                         
-                        <!-- Target Audience -->
                         <div class="mb-4">
                             <label for="target_audience" class="form-label required-field">Target Audience</label>
                             <select class="form-select" id="target_audience" name="target_audience" required>
@@ -149,7 +134,6 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                             </select>
                         </div>
                         
-                        <!-- Submit Button -->
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <button type="reset" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle me-2"></i>Clear Form
@@ -161,7 +145,6 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                     </form>
                 </div>
                 
-                <!-- Back Link -->
                 <div class="text-center">
                     <a href="index.php" class="text-decoration-none">
                         <i class="bi bi-arrow-left me-2"></i>Back to Resources
@@ -171,7 +154,6 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
@@ -193,8 +175,7 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
                 fileInput.removeAttribute("required");
             }
         }
-        
-        // Show success/error messages for 5 seconds then fade out
+
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 const alerts = document.querySelectorAll('.alert');
@@ -209,4 +190,3 @@ $error_message = isset($_GET['error']) && !empty($_GET['error']) ? urldecode($_G
     </script>
 </body>
 </html>
-

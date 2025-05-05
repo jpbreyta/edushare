@@ -52,7 +52,7 @@ require_once '../auth/auth_functions.php';
                     </li>
                     <?php endif; ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="">About SDG 4</a>
+                        <a class="nav-link" href="sdg4.php">About SDG 4</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
@@ -63,7 +63,7 @@ require_once '../auth/auth_functions.php';
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="index.php">Dashboard</a></li>
-                                <li><a class="dropdown-item" href="#">Profile</a></li>
+                                <li><a class="dropdown-item" href="profile.php">Profile</a></li>
                                 <?php if (get_user_type() == 'admin'): ?>
                                 <li><a class="dropdown-item" href="#">Admin Panel</a></li>
                                 <?php endif; ?>
@@ -84,3 +84,4 @@ require_once '../auth/auth_functions.php';
         </div>
     </nav>
     <div class="container mt-4">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
