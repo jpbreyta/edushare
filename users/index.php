@@ -139,6 +139,7 @@ include './includes/header.php';
                 
                 <div class="text-center mt-3">
                     <a href="resources.php" class="btn btn-primary">View All Resources</a>
+                    <a href="clear_cache.php" class="btn btn-secondary ml-2">Clear Cache</a>
                 </div>
             </div>
         </div>

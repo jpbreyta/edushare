@@ -158,6 +158,10 @@ require_once 'auth/auth_functions.php';
                         <h3 class="card-title">Increases Educational Access</h3>
                         <p class="card-text">Provides marginalized students with access to quality educational materials they might not otherwise have.</p>
                     </div>
+                    <div class="text-center mt-3">
+                        <a href="resources.php" class="btn btn-primary">View All Resources</a>
+                        <a href="./users/clear_cache.php" class="btn btn-secondary ml-2">Clear Cache</a>
+                    </div>
                 </div>
             </div>
 
