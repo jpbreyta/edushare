@@ -31,25 +31,129 @@ function loginUser($email, $password) {
     return false;
 }
 
+function getAllUsers() {
+    global $conn;
+    $result = $conn->query("CALL sp_get_all_users()");
+    
+    $users = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $users[] = $row;
+        }
+    }
+    $result->free();
+    $conn->next_result();
+    return $users;
+}
+
+function addUser($name, $email, $password, $user_type, $organization = null, $phone = null, $address = null) {
+    global $conn;
+    
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $stmt = $conn->prepare("CALL sp_add_user(?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssss", $name, $email, $hashed_password, $user_type, $organization, $phone, $address);
+    
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['id'];
+    }
+    return false;
+}
+
+function updateUser($id, $name, $email, $user_type, $organization = null, $phone = null, $address = null) {
+    global $conn;
+    
+    $stmt = $conn->prepare("CALL sp_update_user(?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssss", $id, $name, $email, $user_type, $organization, $phone, $address);
+    
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
+}
+
+function updateUserPassword($id, $password) {
+    global $conn;
+    
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $stmt = $conn->prepare("CALL sp_update_user_password(?, ?)");
+    $stmt->bind_param("is", $id, $hashed_password);
+    
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
+}
+
+function deleteUser($id) {
+    global $conn;
+    
+    $stmt = $conn->prepare("CALL sp_delete_user(?)");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
+}
+
 function getUserById($id) {
     global $conn;
     
-    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt = $conn->prepare("CALL sp_get_user_by_id(?)");
     $stmt->bind_param("i", $id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    if ($result->num_rows === 1) {
-        return $result->fetch_assoc();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $user;
     }
-    return false;
+    $stmt->close();
+    $conn->next_result();
+    return null;
+}
+
+function getUsersByType($user_type) {
+    global $conn;
+    
+    $stmt = $conn->prepare("CALL sp_get_users_by_type(?)");
+    $stmt->bind_param("s", $user_type);
+    $stmt->execute();
+    
+    $result = $stmt->get_result();
+    $users = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $users[] = $row;
+        }
+    }
+    $stmt->close();
+    $conn->next_result();
+    return $users;
 }
 
 // School-related functions
 function getAllSchools() {
     global $conn;
-    $sql = "SELECT * FROM schools ORDER BY name ASC";
-    $result = $conn->query($sql);
+    $result = $conn->query("CALL sp_get_all_schools()");
     
     $schools = [];
     if ($result->num_rows > 0) {
@@ -57,60 +161,82 @@ function getAllSchools() {
             $schools[] = $row;
         }
     }
+    $result->free();
+    $conn->next_result();
     return $schools;
 }
 
 function addSchool($name, $level, $region, $address, $contact_person, $email, $phone) {
     global $conn;
     
-    $stmt = $conn->prepare("INSERT INTO schools (name, level, region, address, contact_person, email, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("CALL sp_add_school(?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("sssssss", $name, $level, $region, $address, $contact_person, $email, $phone);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['id'];
+    }
+    return false;
 }
 
 function updateSchool($id, $name, $level, $region, $address, $contact_person, $email, $phone) {
     global $conn;
     
-    $stmt = $conn->prepare("UPDATE schools SET name = ?, level = ?, region = ?, address = ?, contact_person = ?, email = ?, phone = ? WHERE id = ?");
-    $stmt->bind_param("sssssssi", $name, $level, $region, $address, $contact_person, $email, $phone, $id);
+    $stmt = $conn->prepare("CALL sp_update_school(?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssss", $id, $name, $level, $region, $address, $contact_person, $email, $phone);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
 }
 
 function deleteSchool($id) {
     global $conn;
     
-    $stmt = $conn->prepare("DELETE FROM schools WHERE id = ?");
+    $stmt = $conn->prepare("CALL sp_delete_school(?)");
     $stmt->bind_param("i", $id);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
 }
 
 function getSchoolById($id) {
     global $conn;
     
-    $stmt = $conn->prepare("SELECT * FROM schools WHERE id = ?");
+    $stmt = $conn->prepare("CALL sp_get_school_by_id(?)");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
-        return $result->fetch_assoc();
+        $school = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $school;
     }
+    $stmt->close();
+    $conn->next_result();
     return null;
 }
 
 // Resource-related functions
 function getAllResources() {
     global $conn;
-    $sql = "SELECT r.*, u.name as uploader_name, u.user_type as uploader_type, s.name as school_name, rc.name as category_name
-            FROM resources r 
-            JOIN users u ON r.uploaded_by = u.id 
-            LEFT JOIN schools s ON r.school_id = s.id
-            JOIN resource_categories rc ON r.category_id = rc.id
-            ORDER BY r.created_at DESC";
-    $result = $conn->query($sql);
+    $result = $conn->query("CALL sp_get_all_resources()");
     
     $resources = [];
     if ($result->num_rows > 0) {
@@ -118,52 +244,75 @@ function getAllResources() {
             $resources[] = $row;
         }
     }
+    $result->free();
+    $conn->next_result();
     return $resources;
 }
 
 function addResource($title, $description, $category_id, $resource_type, $file_path, $external_link, $target_audience, $uploaded_by, $school_id = null) {
     global $conn;
     
-    $stmt = $conn->prepare("INSERT INTO resources (title, description, category_id, resource_type, file_path, external_link, target_audience, uploaded_by, school_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("CALL sp_add_resource(?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssissssii", $title, $description, $category_id, $resource_type, $file_path, $external_link, $target_audience, $uploaded_by, $school_id);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['id'];
+    }
+    return false;
 }
 
 function updateResource($id, $title, $description, $category_id, $resource_type, $file_path, $external_link, $target_audience, $school_id = null) {
     global $conn;
     
-    $stmt = $conn->prepare("UPDATE resources SET title = ?, description = ?, category_id = ?, resource_type = ?, file_path = ?, external_link = ?, target_audience = ?, school_id = ? WHERE id = ?");
-    $stmt->bind_param("ssissssii", $title, $description, $category_id, $resource_type, $file_path, $external_link, $target_audience, $school_id, $id);
+    $stmt = $conn->prepare("CALL sp_update_resource(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ississssi", $id, $title, $description, $category_id, $resource_type, $file_path, $external_link, $target_audience, $school_id);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
 }
 
 function deleteResource($id) {
     global $conn;
     
-    $stmt = $conn->prepare("DELETE FROM resources WHERE id = ?");
+    $stmt = $conn->prepare("CALL sp_delete_resource(?)");
     $stmt->bind_param("i", $id);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
 }
 
 function getResourceById($id) {
     global $conn;
     
-    $stmt = $conn->prepare("SELECT r.*, u.name as uploader_name, u.user_type as uploader_type, s.name as school_name, rc.name as category_name
-                           FROM resources r 
-                           JOIN users u ON r.uploaded_by = u.id 
-                           LEFT JOIN schools s ON r.school_id = s.id
-                           JOIN resource_categories rc ON r.category_id = rc.id
-                           WHERE r.id = ?");
+    $stmt = $conn->prepare("CALL sp_get_resource_by_id(?)");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
-        return $result->fetch_assoc();
+        $resource = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $resource;
     }
+    $stmt->close();
+    $conn->next_result();
     return null;
 }
 
@@ -186,11 +335,7 @@ function getAllDonations() {
     global $conn;
     
     try {
-        $sql = "SELECT d.*, s.name as school_name 
-                FROM donations d 
-                LEFT JOIN schools s ON d.school_id = s.id 
-                ORDER BY d.donation_date DESC";
-        $result = $conn->query($sql);
+        $result = $conn->query("CALL sp_get_all_donations()");
         
         if (!$result) {
             error_log("Error in getAllDonations: " . $conn->error);
@@ -203,6 +348,8 @@ function getAllDonations() {
                 $donations[] = $row;
             }
         }
+        $result->free();
+        $conn->next_result();
         return $donations;
     } catch (Exception $e) {
         error_log("Exception in getAllDonations: " . $e->getMessage());
@@ -210,71 +357,69 @@ function getAllDonations() {
     }
 }
 
-function addDonation($donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes = '') {
+function addDonation($donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes = '') {
     global $conn;
     
     try {
-        $stmt = $conn->prepare("INSERT INTO donations (donor_name, donor_email, resource_type, title, description, file_path, external_link, school_id, donation_date, purpose, status, notes) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("CALL sp_add_donation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             error_log("Error preparing statement in addDonation: " . $conn->error);
             return false;
         }
         
-        $stmt->bind_param("sssssssissss", $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes);
+        $stmt->bind_param("sssssssisss", $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes);
         
-        $result = $stmt->execute();
-        if (!$result) {
-            error_log("Error executing statement in addDonation: " . $stmt->error);
-            return false;
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $stmt->close();
+            $conn->next_result();
+            return $row['id'];
         }
-        
-        return true;
+        return false;
     } catch (Exception $e) {
         error_log("Exception in addDonation: " . $e->getMessage());
         return false;
     }
 }
 
-function updateDonation($id, $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes = '') {
+function updateDonation($id, $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes = '') {
     global $conn;
     
-    $stmt = $conn->prepare("UPDATE donations SET 
-                           donor_name = ?, 
-                           donor_email = ?, 
-                           resource_type = ?, 
-                           title = ?,
-                           description = ?,
-                           file_path = ?,
-                           external_link = ?,
-                           school_id = ?, 
-                           donation_date = ?, 
-                           purpose = ?, 
-                           status = ?, 
-                           notes = ? 
-                           WHERE id = ?");
-    $stmt->bind_param("sssssssissssi", $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $status, $notes, $id);
+    $stmt = $conn->prepare("CALL sp_update_donation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssissss", $id, $donor_name, $donor_email, $resource_type, $title, $description, $file_path, $external_link, $school_id, $donation_date, $purpose, $notes);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
 }
 
 function deleteDonation($id) {
     global $conn;
     
-    $stmt = $conn->prepare("DELETE FROM donations WHERE id = ?");
+    $stmt = $conn->prepare("CALL sp_delete_donation(?)");
     $stmt->bind_param("i", $id);
     
-    return $stmt->execute();
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        $conn->next_result();
+        return $row['affected_rows'] > 0;
+    }
+    return false;
 }
 
 function getDonationById($id) {
     global $conn;
     
     try {
-        $stmt = $conn->prepare("SELECT d.*, s.name as school_name 
-                               FROM donations d 
-                               LEFT JOIN schools s ON d.school_id = s.id 
-                               WHERE d.id = ?");
+        $stmt = $conn->prepare("CALL sp_get_donation_by_id(?)");
         if (!$stmt) {
             error_log("Error preparing statement in getDonationById: " . $conn->error);
             return null;
@@ -285,8 +430,13 @@ function getDonationById($id) {
         
         $result = $stmt->get_result();
         if ($result->num_rows > 0) {
-            return $result->fetch_assoc();
+            $donation = $result->fetch_assoc();
+            $stmt->close();
+            $conn->next_result();
+            return $donation;
         }
+        $stmt->close();
+        $conn->next_result();
         return null;
     } catch (Exception $e) {
         error_log("Exception in getDonationById: " . $e->getMessage());

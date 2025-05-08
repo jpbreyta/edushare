@@ -113,123 +113,7 @@ if (isset($_GET['message'])) {
     $message = $_GET['message'];
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resources Management - EduShare Admin</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- DataTables CSS -->
-    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4CAF50;
-            --primary-dark: #388E3C;
-            --primary-light: #C8E6C9;
-            --accent-color: #8BC34A;
-        }
-        
-        .bg-primary-custom {
-            background-color: var(--primary-color);
-        }
-        
-        .sidebar {
-            min-height: calc(100vh - 56px);
-            background-color: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-        }
-        
-        .sidebar .nav-link {
-            color: #333;
-            border-radius: 0;
-        }
-        
-        .sidebar .nav-link.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .sidebar .nav-link:hover:not(.active) {
-            background-color: var(--primary-light);
-        }
-        
-        .content-wrapper {
-            padding: 20px;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            border-color: var(--primary-dark);
-        }
-        
-        .table-actions .btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-        
-        .status-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-        }
-        
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-approved {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .status-rejected {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-book-open me-2"></i>EduShare Admin
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="../index.php" target="_blank">
-                            <i class="fas fa-external-link-alt me-1"></i> View Site
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['name']); ?>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-1"></i> Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i> Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="../auth/logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<?php include 'includes/header.php'; ?>
 
     <div class="container-fluid">
         <div class="row">
@@ -355,7 +239,6 @@ if (isset($_GET['message'])) {
                                             <th>Type</th>
                                             <th>School</th>
                                             <th>Target Audience</th>
-                                            <th>Status</th>
                                             <th>Date</th>
                                             <th>Actions</th>
                                         </tr>
@@ -365,22 +248,17 @@ if (isset($_GET['message'])) {
                                             <tr>
                                                 <td><?php echo htmlspecialchars($resource['id']); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['title']); ?></td>
-                                                <td><?php echo htmlspecialchars($resource['category_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($resource['category']); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['resource_type']); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['school_name'] ?? 'N/A'); ?></td>
                                                 <td><?php echo htmlspecialchars($resource['target_audience']); ?></td>
-                                                <td>
-                                                    <span class="badge bg-<?php echo $resource['status'] === 'approved' ? 'success' : 'warning'; ?>">
-                                                        <?php echo ucfirst($resource['status']); ?>
-                                                    </span>
-                                                </td>
-                                                <td><?php echo date('M d, Y', strtotime($resource['created_at'])); ?></td>
+                                                <td><?php echo date('M d, Y', strtotime($resource['upload_date'])); ?></td>
                                                 <td class="table-actions">
                                                     <button type="button" class="btn btn-sm btn-primary edit-resource" 
                                                             data-id="<?php echo $resource['id']; ?>"
                                                             data-title="<?php echo htmlspecialchars($resource['title']); ?>"
                                                             data-description="<?php echo htmlspecialchars($resource['description']); ?>"
-                                                            data-category-id="<?php echo $resource['category_id']; ?>"
+                                                            data-category="<?php echo htmlspecialchars($resource['category']); ?>"
                                                             data-resource-type="<?php echo htmlspecialchars($resource['resource_type']); ?>"
                                                             data-target-audience="<?php echo htmlspecialchars($resource['target_audience']); ?>"
                                                             data-school-id="<?php echo $resource['school_id']; ?>"
@@ -577,7 +455,7 @@ if (isset($_GET['message'])) {
                 var id = $(this).data('id');
                 var title = $(this).data('title');
                 var description = $(this).data('description');
-                var categoryId = $(this).data('category-id');
+                var category = $(this).data('category');
                 var resourceType = $(this).data('resource-type');
                 var targetAudience = $(this).data('target-audience');
                 var schoolId = $(this).data('school-id');
@@ -585,7 +463,7 @@ if (isset($_GET['message'])) {
                 $('#editResourceId').val(id);
                 $('#editTitle').val(title);
                 $('#editDescription').val(description);
-                $('#editCategoryId').val(categoryId);
+                $('#editCategoryId').val(category);
                 $('#editResourceType').val(resourceType);
                 $('#editTargetAudience').val(targetAudience);
                 $('#editSchoolId').val(schoolId);
