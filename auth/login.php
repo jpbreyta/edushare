@@ -1,13 +1,13 @@
 <?php
-require_once 'config.php';
 require_once 'db_connect.php';
 require_once 'auth_functions.php';
+require_once 'config.php';
 
 $google_auth_url = $google_client->createAuthUrl();
 $error_message = "";
 
-if (isLoggedIn()) {
-    if (isAdmin()) {
+if (is_logged_in()) {
+    if (is_admin()) {
         redirect("../admin/index.php");
     } else {
         redirect("../users/index.php");
@@ -15,8 +15,8 @@ if (isLoggedIn()) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $login = sanitizeInput($_POST['login']);
-    $password = sanitizeInput($_POST['password']);
+    $login = sanitize_input($_POST['login']);
+    $password = sanitize_input($_POST['password']);
     $remember = isset($_POST['remember']) ? true : false;
 
     if (empty($login) || empty($password)) {
@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
 
-            if (verifyPassword($password, $user['password'])) {
+            if (verify_password($password, $user['password'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];

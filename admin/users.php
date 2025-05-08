@@ -5,8 +5,8 @@ require_once '../auth/auth_functions.php';
 require_once 'db_functions.php';
 
 // Check if user is logged in and is an admin
-if (!isLoggedIn() || !isAdmin()) {
-    header('Location: ../login.php');
+if (!is_logged_in() || !is_admin()) {
+    header('Location: ../auth/login.php');
     exit();
 }
 

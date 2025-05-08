@@ -2,16 +2,13 @@
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
+if (!is_logged_in()) {
     redirect("../auth/login.php");
 }
 
-// Get user statistics
 $user_id = $_SESSION['user_id'];
 $user_type = $_SESSION['user_type'];
 
-// Get uploaded resources count (for donors and schools)
 $uploaded_count = 0;
 if ($user_type == 'donor' || $user_type == 'school' || $user_type == 'admin') {
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM resources WHERE uploaded_by = ?");
@@ -23,7 +20,6 @@ if ($user_type == 'donor' || $user_type == 'school' || $user_type == 'admin') {
     }
 }
 
-// Get downloaded/accessed resources count
 $accessed_count = 0;
 $stmt = $conn->prepare("SELECT COUNT(*) as count FROM resource_access WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
@@ -33,19 +29,12 @@ if ($row = $result->fetch_assoc()) {
     $accessed_count = $row['count'];
 }
 
-// Get recent resources
-try {
-    $stmt = $conn->prepare("SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
-                           FROM resources r 
-                           JOIN users u ON r.uploaded_by = u.id 
-                           WHERE r.is_visible = TRUE
-                           ORDER BY r.upload_date DESC LIMIT 5");
-    $stmt->execute();
-    $recent_resources = $stmt->get_result();
-} catch (Exception $e) {
-    error_log("Error fetching recent resources: " . $e->getMessage());
-    $recent_resources = null;
-}
+$stmt = $conn->prepare("SELECT r.*, u.name as uploader_name, u.user_type as uploader_type 
+                       FROM resources r 
+                       JOIN users u ON r.uploaded_by = u.id 
+                       ORDER BY r.upload_date DESC LIMIT 5");
+$stmt->execute();
+$recent_resources = $stmt->get_result();
 
 include './includes/header.php';
 ?>
@@ -112,7 +101,7 @@ include './includes/header.php';
                 <h5 class="mb-0">Recently Added Resources</h5>
             </div>
             <div class="card-body">
-                <?php if ($recent_resources && $recent_resources->num_rows > 0): ?>
+                <?php if ($recent_resources->num_rows > 0): ?>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -150,6 +139,7 @@ include './includes/header.php';
                 
                 <div class="text-center mt-3">
                     <a href="resources.php" class="btn btn-primary">View All Resources</a>
+                    <a href="clear_cache.php" class="btn btn-secondary ml-2">Clear Cache</a>
                 </div>
             </div>
         </div>

@@ -7,16 +7,13 @@ require_once '../auth/db_connect.php';
 $error_message = "";
 $success_message = "";
 
-// Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Sanitize form inputs
-    $title = sanitizeInput($_POST['title']);
-    $description = sanitizeInput($_POST['description']);
-    $category = sanitizeInput($_POST['category']);
-    $resource_type = sanitizeInput($_POST['resource_type']);
-    $target_audience = sanitizeInput($_POST['target_audience']);
+    $title = sanitize_input($_POST['title']);
+    $description = sanitize_input($_POST['description']);
+    $category = sanitize_input($_POST['category']);
+    $resource_type = sanitize_input($_POST['resource_type']);
+    $target_audience = sanitize_input($_POST['target_audience']);
 
-    // Validate required fields
     if (empty($title) || empty($description) || empty($category) || empty($resource_type) || empty($target_audience)) {
         $error_message = "All fields marked with * are required.";
     } else {
@@ -29,13 +26,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $file_tmp = $_FILES['resource_file']['tmp_name'];
                 $file_size = $_FILES['resource_file']['size'];
 
-                // File validation
-                if (!isAllowedFileType($file_name)) {
+                if (!is_allowed_file_type($file_name)) {
                     $error_message = "Unsupported file type.";
                 } elseif ($file_size > 10485760) {
                     $error_message = "File too large. Max size is 10MB.";
                 } else {
-                    $new_file_name = generateUniqueFilename($file_name);
+                    $new_file_name = generate_unique_filename($file_name);
                     $upload_dir = "../uploads/";
 
                     if (!file_exists($upload_dir)) {
@@ -54,20 +50,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $error_message = "No file selected for upload.";
             }
         } elseif ($resource_type === 'link') {
-            $external_link = sanitizeInput($_POST['external_link']);
+            $external_link = sanitize_input($_POST['external_link']);
             if (empty($external_link) || !filter_var($external_link, FILTER_VALIDATE_URL)) {
                 $error_message = "Valid external link required.";
             }
         }
 
-        // Insert into DB if no errors
         if (empty($error_message)) {
             $user_id = $_SESSION['user_id'];
-            $status = 'pending'; // Default status for new resources
-            $is_visible = true; // Default visibility for new resources
-
-            $stmt = $conn->prepare("INSERT INTO resources (title, description, category, resource_type, file_path, external_link, target_audience, uploaded_by, status, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssssssisi", $title, $description, $category, $resource_type, $file_path, $external_link, $target_audience, $user_id, $status, $is_visible);
+            $stmt = $conn->prepare("CALL UploadResource(?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssssssi", $title, $description, $category, $resource_type, $file_path, $external_link, $target_audience, $user_id);
 
             if ($stmt->execute()) {
                 $success_message = "Resource uploaded successfully!";
@@ -77,8 +69,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
-
-// Redirect back to the page with the form
 header("Location: upload_form.php?success=" . urlencode($success_message) . "&error=" . urlencode($error_message));
 exit;
 ?>

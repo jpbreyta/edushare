@@ -209,7 +209,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $donations = getAllDonations();
 $schools = getAllSchools();
 ?>
-<?php include 'includes/header.php'; ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donations Management - EduShare Admin</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --primary-light: #C8E6C9;
+            --accent-color: #8BC34A;
+        }
+        
+        .bg-primary-custom {
+            background-color: var(--primary-color);
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+        
+        .sidebar .nav-link {
+            color: #333;
+            border-radius: 0;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link:hover:not(.active) {
+            background-color: var(--primary-light);
+        }
+        
+        .content-wrapper {
+            padding: 20px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .table-actions .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .donation-card {
+            transition: transform 0.3s;
+        }
+        
+        .donation-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .donation-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .donation-stats {
+            background-color: var(--primary-light);
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.php">
+                <i class="fas fa-book-open me-2"></i>EduShare Admin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.php" target="_blank">
+                            <i class="fas fa-external-link-alt me-1"></i> View Site
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin'); ?>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-1"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="../auth/logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
     <div class="container-fluid">
         <div class="row">
@@ -379,6 +493,7 @@ $schools = getAllSchools();
                                             <th>School</th>
                                             <th>Purpose</th>
                                             <th>Date</th>
+                                            <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -393,6 +508,18 @@ $schools = getAllSchools();
                                                 <td><?php echo htmlspecialchars($donation['purpose']); ?></td>
                                                 <td><?php echo htmlspecialchars($donation['donation_date']); ?></td>
                                                 <td>
+                                                    <span class="badge bg-<?php 
+                                                        switch($donation['status']) {
+                                                            case 'completed': echo 'success'; break;
+                                                            case 'in_progress': echo 'info'; break;
+                                                            case 'cancelled': echo 'danger'; break;
+                                                            default: echo 'warning';
+                                                        }
+                                                    ?>">
+                                                        <?php echo ucfirst(str_replace('_', ' ', $donation['status'])); ?>
+                                                    </span>
+                                                </td>
+                                                <td>
                                                     <button class="btn btn-sm btn-primary edit-donation" 
                                                         data-id="<?php echo $donation['id']; ?>"
                                                         data-donor-name="<?php echo htmlspecialchars($donation['donor_name']); ?>"
@@ -405,6 +532,7 @@ $schools = getAllSchools();
                                                         data-school-id="<?php echo $donation['school_id']; ?>"
                                                         data-donation-date="<?php echo $donation['donation_date']; ?>"
                                                         data-purpose="<?php echo htmlspecialchars($donation['purpose']); ?>"
+                                                        data-status="<?php echo $donation['status']; ?>"
                                                         data-notes="<?php echo htmlspecialchars($donation['notes']); ?>"
                                                         data-bs-toggle="tooltip" title="Edit">
                                                         <i class="fas fa-edit"></i>

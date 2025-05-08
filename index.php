@@ -10,6 +10,7 @@ require_once 'auth/auth_functions.php';
     <title>EduShare - Digital Library for Underprivileged Schools</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         .bg-primary-custom {
             background-color: #4CAF50;
@@ -41,6 +42,25 @@ require_once 'auth/auth_functions.php';
             color: #4CAF50;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const isLoggedIn = <?php echo is_logged_in() ? 'true' : 'false'; ?>;
+
+        function handleProtectedLink(event, url) {
+            if (!isLoggedIn) {
+                event.preventDefault();
+                Swal.fire({
+                    title: 'Login Required',
+                    text: 'Please log in to access this feature.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4CAF50',
+                    confirmButtonText: 'OK'
+                });
+            } else {
+                window.location.href = url;
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -49,7 +69,8 @@ require_once 'auth/auth_functions.php';
             <a class="navbar-brand" href="index.php">
                 <i class="fas fa-book-open me-2"></i>EduShare
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -58,7 +79,7 @@ require_once 'auth/auth_functions.php';
                         <a class="nav-link active" href="index.php">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="users/resources.php">Resources</a>
+                        <a class="nav-link" href="#" onclick="handleProtectedLink(event, 'users/resources.php')">Resources</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="users/sdg4.php">About SDG 4</a>
@@ -68,20 +89,20 @@ require_once 'auth/auth_functions.php';
                     </li>
                 </ul>
                 <ul class="navbar-nav">
-                    <?php if (isLoggedIn()): ?>
+                    <?php if (is_logged_in()): ?>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle me-1"></i> <?php echo $_SESSION['name']; ?> (<?php echo ucfirst($_SESSION['user_type']); ?>)
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i>
+                                <?php echo $_SESSION['name']; ?> (<?php echo ucfirst($_SESSION['user_type']); ?>)
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="users/index.php">Dashboard</a></li>
-                                <li><a class="dropdown-item" href="#">Profile</a></li>
-                                <?php if (getUserType() == 'admin'): ?>
+                                <li><a class="dropdown-item" href="users/profile.php">Profile</a></li>
+                                <?php if (get_user_type() == 'admin'): ?>
                                     <li><a class="dropdown-item" href="./admin/index.php">Admin Panel</a></li>
                                 <?php endif; ?>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="auth/logout.php">Logout</a></li>
                             </ul>
                         </li>
@@ -110,14 +131,14 @@ require_once 'auth/auth_functions.php';
                         supporting SDG 4: Quality Education for all.
                     </p>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                        <a href="users/resources.php" class="btn btn-primary btn-lg px-4 me-md-2">Browse Resources</a>
+                        <a href="#" class="btn btn-primary btn-lg px-4 me-md-2"
+                           onclick="handleProtectedLink(event, 'users/resources.php')">Browse Resources</a>
                         <a href="auth/register.php" class="btn btn-outline-secondary btn-lg px-4">Join Now</a>
                     </div>
                 </div>
                 <div class="col-md-6 text-center">
                     <img src="./assets/images/logo.png" alt="EduShare" class="img-fluid rounded shadow" style="max-width: 300px;">
                 </div>
-
             </div>
         </div>
     </section>
@@ -136,6 +157,10 @@ require_once 'auth/auth_functions.php';
                         <i class="fas fa-graduation-cap feature-icon"></i>
                         <h3 class="card-title">Increases Educational Access</h3>
                         <p class="card-text">Provides marginalized students with access to quality educational materials they might not otherwise have.</p>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="resources.php" class="btn btn-primary">View All Resources</a>
+                        <a href="./users/clear_cache.php" class="btn btn-secondary ml-2">Clear Cache</a>
                     </div>
                 </div>
             </div>
