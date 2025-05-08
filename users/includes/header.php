@@ -9,6 +9,7 @@ require_once '../auth/auth_functions.php';
     <title>EduShare - Digital Library for Underprivileged Schools</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <style>
         .bg-primary-custom {
             background-color: #4CAF50;
@@ -46,6 +47,13 @@ require_once '../auth/auth_functions.php';
                     <li class="nav-item">
                         <a class="nav-link" href="resources.php">Resources</a>
                     </li>
+                    <?php if (is_logged_in()): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="my_bookmarks.php">
+                            <i class="fas fa-bookmark"></i> My Bookmarks
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <?php if (is_logged_in() && (get_user_type() == 'donor' || get_user_type() == 'school' || get_user_type() == 'admin')): ?>
                     <li class="nav-item">
                         <a class="nav-link" href="upload.php">Upload Resources</a>
@@ -85,3 +93,4 @@ require_once '../auth/auth_functions.php';
     </nav>
     <div class="container mt-4">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>

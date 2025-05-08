@@ -1,4 +1,3 @@
-
 <?php
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
@@ -15,6 +14,22 @@ $stmt = $conn->prepare("CALL GetFilteredResources(?, ?, ?)");
 $stmt->bind_param("sss", $category, $audience, $search);
 $stmt->execute();
 $resources = $stmt->get_result();
+$stmt->close();
+$conn->next_result(); // Clear the result set
+
+// Get user's bookmarks if logged in
+$bookmarked_resources = [];
+if (is_logged_in()) {
+    $user_id = $_SESSION['user_id'];
+    $bookmark_stmt = $conn->prepare("SELECT resource_id FROM bookmarks WHERE user_id = ?");
+    $bookmark_stmt->bind_param("i", $user_id);
+    $bookmark_stmt->execute();
+    $bookmark_result = $bookmark_stmt->get_result();
+    while ($row = $bookmark_result->fetch_assoc()) {
+        $bookmarked_resources[] = $row['resource_id'];
+    }
+    $bookmark_stmt->close();
+}
 
 include './includes/header.php';
 ?>
@@ -107,9 +122,13 @@ include './includes/header.php';
                         <a href="view_resource.php?id=<?php echo $resource['id']; ?>" class="btn btn-primary flex-fill">
                             <i class="fas fa-eye"></i> View Details
                         </a>
-                        <button class="btn btn-outline-secondary flex-fill" title="Bookmark this resource">
-                            <i class="fas fa-bookmark"></i>
-                        </button>
+                        <?php if (is_logged_in()): ?>
+                            <button class="btn <?php echo in_array($resource['id'], $bookmarked_resources) ? 'btn-secondary' : 'btn-outline-secondary'; ?> flex-fill bookmark-btn" 
+                                    data-resource-id="<?php echo $resource['id']; ?>" 
+                                    title="<?php echo in_array($resource['id'], $bookmarked_resources) ? 'Remove bookmark' : 'Bookmark this resource'; ?>">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -122,3 +141,67 @@ include './includes/header.php';
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bookmarkButtons = document.querySelectorAll('.bookmark-btn');
+    
+    bookmarkButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const resourceId = this.dataset.resourceId;
+            const isBookmarked = this.classList.contains('btn-success');
+            const action = isBookmarked ? 'remove' : 'add';
+            
+            fetch('bookmark.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `resource_id=${resourceId}&action=${action}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (action === 'add') {
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
+                        this.title = 'Remove from Bookmarks';
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Bookmarked!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-success');
+                        this.title = 'Add to Bookmarks';
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Removed!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Failed to process your request. Please try again.'
+                });
+            });
+        });
+    });
+});
+</script>
