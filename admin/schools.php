@@ -30,52 +30,118 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $email = $_POST['email'];
                 $phone = $_POST['phone'];
                 
+                // Basic validation
+                if (empty($name) || empty($level) || empty($region) || empty($address) || 
+                    empty($contact_person) || empty($email) || empty($phone)) {
+                    $error = 'All fields are required.';
+                    break;
+                }
+                
+                // Email validation
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $error = 'Please enter a valid email address.';
+                    break;
+                }
+                
                 try {
-                    if (addSchool($name, $level, $region, $address, $contact_person, $email, $phone)) {
-                        $message = 'School added successfully!';
+                    $result = addSchool($name, $level, $region, $address, $contact_person, $email, $phone);
+                    if ($result) {
+                        $message = 'School added successfully! School ID: ' . $result;
+                        header('Location: schools.php?message=' . urlencode($message));
+                        exit();
                     } else {
-                        $error = 'Failed to add school. Please try again.';
+                        error_log("Failed to add school: addSchool returned false");
+                        $error = 'Failed to add school. Please check the logs for more information.';
                     }
                 } catch (mysqli_sql_exception $e) {
+                    error_log("Exception in schools.php when adding school: " . $e->getMessage() . " (Code: " . $e->getCode() . ")");
                     if ($e->getCode() == 1062) { // MySQL error code for duplicate entry
                         $error = 'A school with this email already exists in the database.';
+                    } else if ($e->getCode() == 1048) { // MySQL error code for column cannot be null
+                        $error = 'All fields are required. Error in data submission.';
+                    } else if ($e->getCode() == 1265) { // MySQL error code for invalid enum value
+                        $error = 'Invalid school level selected.';
                     } else {
-                        $error = 'An error occurred while adding the school: ' . $e->getMessage();
+                        $error = 'Database error: ' . $e->getMessage();
                     }
+                } catch (Exception $e) {
+                    error_log("General exception in schools.php when adding school: " . $e->getMessage());
+                    $error = 'An unexpected error occurred: ' . $e->getMessage();
                 }
                 break;
                 
             case 'edit':
-                $id = $_POST['id'];
-                $name = $_POST['name'];
-                $level = $_POST['level'];
-                $region = $_POST['region'];
-                $address = $_POST['address'];
-                $contact_person = $_POST['contact_person'];
-                $email = $_POST['email'];
-                $phone = $_POST['phone'];
+                $id = isset($_POST['id']) ? trim($_POST['id']) : '';
+                $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+                $level = isset($_POST['level']) ? trim($_POST['level']) : '';
+                $region = isset($_POST['region']) ? trim($_POST['region']) : '';
+                $address = isset($_POST['address']) ? trim($_POST['address']) : '';
+                $contact_person = isset($_POST['contact_person']) ? trim($_POST['contact_person']) : '';
+                $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+                $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
+
+                // Basic validation
+                if (empty($id) || empty($name) || empty($level) || empty($region) || empty($address) || 
+                    empty($contact_person) || empty($email) || empty($phone)) {
+                    $error = 'All fields are required for updating a school.';
+                    break;
+                }
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $error = 'Invalid email format.';
+                    break;
+                }
                 
                 try {
                     if (updateSchool($id, $name, $level, $region, $address, $contact_person, $email, $phone)) {
                         $message = 'School updated successfully!';
+                        // Optionally, redirect to refresh data or clear POST
+                        // header('Location: schools.php?message=' . urlencode($message));
+                        // exit();
                     } else {
-                        $error = 'Failed to update school. Please try again.';
+                        // This case might mean 0 rows affected (data was the same or ID not found and not caught by DB function)
+                        $error = 'Failed to update school. No changes were made, or the school was not found.';
                     }
                 } catch (mysqli_sql_exception $e) {
-                    if ($e->getCode() == 1062) {
-                        $error = 'A school with this email already exists in the database.';
-                    } else {
-                        $error = 'An error occurred while updating the school: ' . $e->getMessage();
+                    error_log("Exception in schools.php (edit): " . $e->getMessage() . " (Code: " . $e->getCode() . ")");
+                    if ($e->getCode() == 1062) { // Duplicate email
+                        $error = 'Failed to update school: The email address \'' . htmlspecialchars($email) . '\' is already in use by another school.';
+                    } else if ($e->getCode() == 1265) { // Invalid enum value
+                         $error = 'Invalid school level selected.';
+                    }else {
+                        $error = 'An error occurred while updating the school: Database error. Check logs.';
                     }
+                } catch (Exception $e) {
+                    error_log("General Exception in schools.php (edit): " . $e->getMessage());
+                    $error = 'An unexpected error occurred while updating the school.';
                 }
                 break;
                 
             case 'delete':
-                $id = $_POST['id'];
-                if (deleteSchool($id)) {
-                    $message = 'School deleted successfully!';
-                } else {
-                    $error = 'Failed to delete school. Please try again.';
+                $id = isset($_POST['id']) ? trim($_POST['id']) : '';
+
+                if (empty($id)) {
+                    $error = 'School ID is required for deletion.';
+                    break;
+                }
+
+                try {
+                    if (deleteSchool($id)) {
+                        $message = 'School deleted successfully!';
+                        // header('Location: schools.php?message=' . urlencode($message));
+                        // exit();
+                    } else {
+                        $error = 'Failed to delete school. It may have already been deleted or does not exist.';
+                    }
+                } catch (mysqli_sql_exception $e) {
+                    error_log("Exception in schools.php (delete): " . $e->getMessage() . " (Code: " . $e->getCode() . ")");
+                    if ($e->getCode() == 1451) { // Foreign key constraint violation
+                        $error = 'Cannot delete school: This school is referenced by other records (e.g., resources, donations). Please remove those references first.';
+                    } else {
+                        $error = 'An error occurred while deleting the school: Database error. Check logs.';
+                    }
+                } catch (Exception $e) {
+                    error_log("General Exception in schools.php (delete): " . $e->getMessage());
+                    $error = 'An unexpected error occurred while deleting the school.';
                 }
                 break;
         }
@@ -200,10 +266,9 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                             <label for="levelFilter" class="form-label">School Level</label>
                                             <select class="form-select" id="levelFilter" name="level">
                                                 <option value="">All Levels</option>
-                                                <option value="elementary">Elementary</option>
-                                                <option value="middle">Middle School</option>
-                                                <option value="high">High School</option>
-                                                <option value="college">College/University</option>
+                                                <option value="primary">Primary</option>
+                                                <option value="secondary">Secondary</option>
+                                                <option value="tertiary">Tertiary</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4">
@@ -362,10 +427,9 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                         <div class="mb-3">
                             <label for="level" class="form-label">School Level</label>
                             <select class="form-select" id="level" name="level" required>
-                                <option value="elementary">Elementary</option>
-                                <option value="middle">Middle School</option>
-                                <option value="high">High School</option>
-                                <option value="college">College/University</option>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="tertiary">Tertiary</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -423,10 +487,9 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                         <div class="mb-3">
                             <label for="edit_level" class="form-label">School Level</label>
                             <select class="form-select" id="edit_level" name="level" required>
-                                <option value="elementary">Elementary</option>
-                                <option value="middle">Middle School</option>
-                                <option value="high">High School</option>
-                                <option value="college">College/University</option>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="tertiary">Tertiary</option>
                             </select>
                         </div>
                         <div class="mb-3">
