@@ -20,17 +20,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     switch ($action) {
         case 'add':
             $name = $_POST['name'] ?? '';
+            $username = $_POST['username'] ?? '';
             $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
             $user_type = $_POST['user_type'] ?? '';
             $organization = $_POST['organization'] ?? null;
-            $phone = $_POST['phone'] ?? null;
-            $address = $_POST['address'] ?? null;
             
-            if (empty($name) || empty($email) || empty($password) || empty($user_type)) {
+            if (empty($name) || empty($username) || empty($email) || empty($password) || empty($user_type)) {
                 $error = "Please fill in all required fields.";
             } else {
-                $result = addUser($name, $email, $password, $user_type, $organization, $phone, $address);
+                $result = addUser($name, $username, $email, $password, $user_type, $organization);
                 if ($result) {
                     $message = "User added successfully.";
                 } else {
@@ -42,16 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'edit':
             $id = $_POST['id'] ?? 0;
             $name = $_POST['name'] ?? '';
+            $username = $_POST['username'] ?? '';
             $email = $_POST['email'] ?? '';
             $user_type = $_POST['user_type'] ?? '';
             $organization = $_POST['organization'] ?? null;
-            $phone = $_POST['phone'] ?? null;
-            $address = $_POST['address'] ?? null;
             
-            if (empty($name) || empty($email) || empty($user_type)) {
+            if (empty($name) || empty($username) || empty($email) || empty($user_type)) {
                 $error = "Please fill in all required fields.";
             } else {
-                $result = updateUser($id, $name, $email, $user_type, $organization, $phone, $address);
+                $result = updateUser($id, $name, $username, $email, $user_type, $organization);
                 if ($result) {
                     $message = "User updated successfully.";
                 } else {
@@ -184,27 +182,28 @@ $users = getAllUsers();
                                             <td><?php echo ucfirst($user['user_type']); ?></td>
                                             <td><?php echo htmlspecialchars($user['organization'] ?? ''); ?></td>
                                             <td class="table-actions">
-                                                <button type="button" class="btn btn-sm btn-primary edit-user" 
-                                                        data-id="<?php echo $user['id']; ?>"
-                                                        data-name="<?php echo htmlspecialchars($user['name']); ?>"
-                                                        data-email="<?php echo htmlspecialchars($user['email']); ?>"
-                                                        data-type="<?php echo $user['user_type']; ?>"
-                                                        data-organization="<?php echo htmlspecialchars($user['organization'] ?? ''); ?>"
-                                                        data-phone="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>"
-                                                        data-address="<?php echo htmlspecialchars($user['address'] ?? ''); ?>">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-warning change-password"
-                                                        data-id="<?php echo $user['id']; ?>"
-                                                        data-name="<?php echo htmlspecialchars($user['name']); ?>">
-                                                    <i class="fas fa-key"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-danger delete-user"
-                                                        data-id="<?php echo $user['id']; ?>"
-                                                        data-name="<?php echo htmlspecialchars($user['name']); ?>">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
+                                        <button type="button" class="btn btn-sm btn-primary edit-user"
+                                        data-id="<?php echo $user['id']; ?>"
+                                        data-name="<?php echo htmlspecialchars($user['name']); ?>"
+                                        data-username="<?php echo htmlspecialchars($user['username']); ?>"
+                                        data-email="<?php echo htmlspecialchars($user['email']); ?>"
+                                        data-type="<?php echo $user['user_type']; ?>"
+                                        data-organization="<?php echo htmlspecialchars($user['organization'] ?? ''); ?>"
+                                        data-phone="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>"
+                                        data-address="<?php echo htmlspecialchars($user['address'] ?? ''); ?>">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                        <button type="button" class="btn btn-sm btn-warning change-password"
+                                            data-id="<?php echo $user['id']; ?>"
+                                            data-name="<?php echo htmlspecialchars($user['name']); ?>">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger delete-user"
+                                            data-id="<?php echo $user['id']; ?>"
+                                            data-name="<?php echo htmlspecialchars($user['name']); ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -232,7 +231,10 @@ $users = getAllUsers();
                             <label class="form-label">Name *</label>
                             <input type="text" class="form-control" name="name" required>
                         </div>
-                        
+                        <div class="mb-3">
+                            <label class="form-label">Username *</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Email *</label>
                             <input type="email" class="form-control" name="email" required>
@@ -246,10 +248,10 @@ $users = getAllUsers();
                         <div class="mb-3">
                             <label class="form-label">User Type *</label>
                             <select class="form-select" name="user_type" required>
-                                <option value="admin">Admin</option>
-                                <option value="school_admin">School Admin</option>
-                                <option value="donor">Donor</option>
-                                <option value="teacher">Teacher</option>
+                            <option value="admin">Admin</option>
+                            <option value="school">School</option>
+                            <option value="donor">Donor</option>
+                            <option value="student">Student</option>
                             </select>
                         </div>
                         
@@ -294,6 +296,10 @@ $users = getAllUsers();
                             <label class="form-label">Name *</label>
                             <input type="text" class="form-control" name="name" id="edit_name" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Username *</label>
+                            <input type="text" class="form-control" name="username" id="edit_username" required>
+                        </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Email *</label>
@@ -304,9 +310,9 @@ $users = getAllUsers();
                             <label class="form-label">User Type *</label>
                             <select class="form-select" name="user_type" id="edit_user_type" required>
                                 <option value="admin">Admin</option>
-                                <option value="school_admin">School Admin</option>
+                                <option value="school">School</option>
                                 <option value="donor">Donor</option>
-                                <option value="teacher">Teacher</option>
+                                <option value="student">Student</option>
                             </select>
                         </div>
                         
@@ -394,25 +400,49 @@ $users = getAllUsers();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Edit User
-        document.querySelectorAll('.edit-user').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const name = this.dataset.name;
-                const email = this.dataset.email;
-                const type = this.dataset.type;
-                const organization = this.dataset.organization;
-                const phone = this.dataset.phone;
-                const address = this.dataset.address;
-                
-                document.getElementById('edit_id').value = id;
-                document.getElementById('edit_name').value = name;
-                document.getElementById('edit_email').value = email;
-                document.getElementById('edit_user_type').value = type;
-                document.getElementById('edit_organization').value = organization;
-                document.getElementById('edit_phone').value = phone;
-                document.getElementById('edit_address').value = address;
-                
-                new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.edit-user').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const name = this.dataset.name;
+                    const username = this.dataset.username;
+                    const email = this.dataset.email;
+                    const type = this.dataset.type;
+                    const organization = this.dataset.organization;
+                    const phone = this.dataset.phone;
+                    const address = this.dataset.address;
+                    
+                    document.getElementById('edit_id').value = id;
+                    document.getElementById('edit_name').value = name;
+                    document.getElementById('edit_username').value = username;
+                    document.getElementById('edit_email').value = email;
+                    document.getElementById('edit_user_type').value = type;
+                    document.getElementById('edit_organization').value = organization;
+                    document.getElementById('edit_phone').value = phone;
+                    document.getElementById('edit_address').value = address;
+                    
+                    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+                });
+            });
+            // Change Password
+            document.querySelectorAll('.change-password').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const name = this.dataset.name;
+                    document.getElementById('password_id').value = id;
+                    document.getElementById('password_user_name').value = name;
+                    new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+                });
+            });
+            // Delete User
+            document.querySelectorAll('.delete-user').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const name = this.dataset.name;
+                    document.getElementById('delete_id').value = id;
+                    document.getElementById('delete_user_name').textContent = name;
+                    new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
+                });
             });
         });
         

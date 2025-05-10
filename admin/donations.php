@@ -87,10 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $_SESSION['error'] = 'Invalid data provided for update. Please check required fields (Title, Resource Type, Quantity > 0, Donor Name).';
             } else {
                 // Pass donor_name to update function
-                if (updateDonation((int)$id, $title, $description, $resource_type, (int)$quantity_str, $donor_name)) {
+                $update_result = updateDonation((int)$id, $title, $description, $resource_type, (int)$quantity_str, $donor_name);
+                if ($update_result) {
                     $_SESSION['message'] = 'Resource donation updated successfully';
                 } else {
-                     $_SESSION['error'] = 'Failed to update resource donation or no changes were made. Details: ' . ($conn->error ?? 'Unknown error');
+                    $_SESSION['error'] = 'Failed to update resource donation. Please try again.';
                 }
             }
             header('Location: donations.php');
