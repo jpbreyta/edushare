@@ -29,16 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'add':
                 $title = $_POST['title'];
                 $description = $_POST['description'];
-                $category_id = $_POST['category_id'];
+                $category = $_POST['category'];
                 $resource_type = $_POST['resource_type'];
-                $file_path = $_POST['file_path'];
-                $external_link = $_POST['external_link'];
+                $file_path = isset($_POST['file_path']) ? $_POST['file_path'] : null;
+                $external_link = isset($_POST['external_link']) ? $_POST['external_link'] : null;
                 $target_audience = $_POST['target_audience'];
                 $uploaded_by = $_SESSION['user_id'];
                 $school_id = !empty($_POST['school_id']) ? $_POST['school_id'] : null;
+                $is_visible = isset($_POST['is_visible']) ? 1 : 0;
                 
                 try {
-                    if (addResource($title, $description, $category_id, $resource_type, $file_path, $external_link, $target_audience, $uploaded_by, $school_id)) {
+                    if (addResource($title, $description, $category, $resource_type, $file_path, $external_link, $target_audience, $uploaded_by, $school_id)) {
                         $message = 'Resource added successfully!';
                         header('Location: resources.php?message=' . urlencode($message));
                         exit();
@@ -54,15 +55,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id = $_POST['id'];
                 $title = $_POST['title'];
                 $description = $_POST['description'];
-                $category_id = $_POST['category_id'];
+                $category = $_POST['category'];
                 $resource_type = $_POST['resource_type'];
-                $file_path = isset($_POST['file_path']) ? $_POST['file_path'] : '';
-                $external_link = isset($_POST['external_link']) ? $_POST['external_link'] : '';
+                $file_path = isset($_POST['file_path']) ? $_POST['file_path'] : null;
+                $external_link = isset($_POST['external_link']) ? $_POST['external_link'] : null;
                 $target_audience = $_POST['target_audience'];
                 $school_id = !empty($_POST['school_id']) ? $_POST['school_id'] : null;
+                $is_visible = isset($_POST['is_visible']) ? 1 : 0;
                 
                 try {
-                    if (updateResource($id, $title, $description, $category_id, $resource_type, $file_path, $external_link, $target_audience, $school_id)) {
+                    if (updateResource($id, $title, $description, $category, $resource_type, $file_path, $external_link, $target_audience, $school_id, $is_visible)) {
                         $message = 'Resource updated successfully!';
                         header('Location: resources.php?message=' . urlencode($message));
                         exit();
@@ -75,13 +77,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'delete':
-                $id = $_POST['id'];
-                if (deleteResource($id)) {
-                    $message = 'Resource deleted successfully!';
-                    header('Location: resources.php?message=' . urlencode($message));
-                    exit();
-                } else {
-                    $error = 'Failed to delete resource. Please try again.';
+                $id = isset($_POST['id']) ? trim($_POST['id']) : '';
+                
+                if (empty($id)) {
+                    $error = 'Invalid resource ID provided.';
+                    break;
+                }
+                
+                try {
+                    if (deleteResource($id)) {
+                        $message = 'Resource deleted successfully!';
+                        header('Location: resources.php?message=' . urlencode($message));
+                        exit();
+                    } else {
+                        $error = 'Failed to delete resource. The resource may not exist or has already been deleted.';
+                    }
+                } catch (mysqli_sql_exception $e) {
+                    $error = 'An error occurred while deleting the resource: ' . $e->getMessage();
+                    error_log('Error in resource deletion: ' . $e->getMessage());
                 }
                 break;
         }
@@ -196,19 +209,18 @@ if (isset($_GET['message'])) {
                                             <label for="resourceCategory" class="form-label">Category</label>
                                             <select class="form-select" id="resourceCategory" name="category">
                                                 <option value="">All Categories</option>
-                                                <?php foreach ($categories as $category): ?>
-                                                    <option value="<?php echo $category['id']; ?>"><?php echo htmlspecialchars($category['name']); ?></option>
-                                                <?php endforeach; ?>
+                                                <option value="textbook">Textbook</option>
+                                                <option value="ebook">E-Book</option>
+                                                <option value="presentation">Presentation</option>
+                                                <option value="worksheet">Worksheet</option>
                                             </select>
                                         </div>
                                         <div class="col-md-3">
                                             <label for="resourceType" class="form-label">Type</label>
                                             <select class="form-select" id="resourceType" name="type">
                                                 <option value="">All Types</option>
-                                                <option value="document">Document</option>
-                                                <option value="video">Video</option>
+                                                <option value="file">File</option>
                                                 <option value="link">Link</option>
-                                                <option value="other">Other</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4">
@@ -260,9 +272,11 @@ if (isset($_GET['message'])) {
                                                             data-description="<?php echo htmlspecialchars($resource['description']); ?>"
                                                             data-category="<?php echo htmlspecialchars($resource['category']); ?>"
                                                             data-resource-type="<?php echo htmlspecialchars($resource['resource_type']); ?>"
+                                                            data-file-path="<?php echo htmlspecialchars($resource['file_path']); ?>"
+                                                            data-external-link="<?php echo htmlspecialchars($resource['external_link']); ?>"
                                                             data-target-audience="<?php echo htmlspecialchars($resource['target_audience']); ?>"
                                                             data-school-id="<?php echo $resource['school_id']; ?>"
-                                                            data-status="<?php echo htmlspecialchars($resource['status']); ?>">
+                                                            data-is-visible="<?php echo $resource['is_visible'] ? '1' : '0'; ?>">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-danger" 
@@ -305,22 +319,19 @@ if (isset($_GET['message'])) {
                             <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="category_id" class="form-label">Category</label>
-                            <select class="form-select" id="category_id" name="category_id" required>
-                                <option value="">Select Category</option>
-                                <?php foreach ($categories as $category): ?>
-                                    <option value="<?php echo $category['id']; ?>"><?php echo htmlspecialchars($category['name']); ?></option>
-                                <?php endforeach; ?>
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="textbook">Textbook</option>
+                                <option value="ebook">E-Book</option>
+                                <option value="presentation">Presentation</option>
+                                <option value="worksheet">Worksheet</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="resource_type" class="form-label">Type</label>
                             <select class="form-select" id="resource_type" name="resource_type" required>
-                                <option value="">Select Type</option>
-                                <option value="document">Document</option>
-                                <option value="video">Video</option>
+                                <option value="file">File</option>
                                 <option value="link">Link</option>
-                                <option value="other">Other</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -333,7 +344,13 @@ if (isset($_GET['message'])) {
                         </div>
                         <div class="mb-3">
                             <label for="target_audience" class="form-label">Target Audience</label>
-                            <input type="text" class="form-control" id="target_audience" name="target_audience" required>
+                            <select class="form-select" id="target_audience" name="target_audience" required>
+                                <option value="cics">CICS</option>
+                                <option value="cte">CTE</option>
+                                <option value="cit">CIT</option>
+                                <option value="cas">CAS</option>
+                                <option value="cabe">CABE</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="school_id" class="form-label">School</label>
@@ -342,6 +359,13 @@ if (isset($_GET['message'])) {
                                 <?php foreach ($schools as $school): ?>
                                     <option value="<?php echo $school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="is_visible" class="form-label">Visibility</label>
+                            <select class="form-select" id="is_visible" name="is_visible" required>
+                                <option value="1">Visible</option>
+                                <option value="0">Hidden</option>
                             </select>
                         </div>
                     </div>
@@ -375,27 +399,38 @@ if (isset($_GET['message'])) {
                             <textarea class="form-control" id="editDescription" name="description" rows="3" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="editCategoryId" class="form-label">Category</label>
-                            <select class="form-select" id="editCategoryId" name="category_id" required>
-                                <option value="">Select Category</option>
-                                <?php foreach ($categories as $category): ?>
-                                    <option value="<?php echo $category['id']; ?>"><?php echo htmlspecialchars($category['name']); ?></option>
-                                <?php endforeach; ?>
+                            <label for="editCategory" class="form-label">Category</label>
+                            <select class="form-select" id="editCategory" name="category" required>
+                                <option value="textbook">Textbook</option>
+                                <option value="ebook">E-Book</option>
+                                <option value="presentation">Presentation</option>
+                                <option value="worksheet">Worksheet</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="editResourceType" class="form-label">Resource Type</label>
                             <select class="form-select" id="editResourceType" name="resource_type" required>
-                                <option value="">Select Type</option>
-                                <option value="document">Document</option>
-                                <option value="video">Video</option>
+                                <option value="file">File</option>
                                 <option value="link">Link</option>
-                                <option value="other">Other</option>
                             </select>
                         </div>
                         <div class="mb-3">
+                            <label for="editFilePath" class="form-label">File Path</label>
+                            <input type="text" class="form-control" id="editFilePath" name="file_path">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editExternalLink" class="form-label">External Link</label>
+                            <input type="url" class="form-control" id="editExternalLink" name="external_link">
+                        </div>
+                        <div class="mb-3">
                             <label for="editTargetAudience" class="form-label">Target Audience</label>
-                            <input type="text" class="form-control" id="editTargetAudience" name="target_audience" required>
+                            <select class="form-select" id="editTargetAudience" name="target_audience" required>
+                                <option value="cics">CICS</option>
+                                <option value="cte">CTE</option>
+                                <option value="cit">CIT</option>
+                                <option value="cas">CAS</option>
+                                <option value="cabe">CABE</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="editSchoolId" class="form-label">School</label>
@@ -404,6 +439,13 @@ if (isset($_GET['message'])) {
                                 <?php foreach ($schools as $school): ?>
                                     <option value="<?php echo $school['id']; ?>"><?php echo htmlspecialchars($school['name']); ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editIsVisible" class="form-label">Visibility</label>
+                            <select class="form-select" id="editIsVisible" name="is_visible" required>
+                                <option value="1">Visible</option>
+                                <option value="0">Hidden</option>
                             </select>
                         </div>
                     </div>
@@ -448,38 +490,52 @@ if (isset($_GET['message'])) {
     <script>
         $(document).ready(function() {
             // Initialize DataTable
-            $('#resourcesTable').DataTable();
+            $('#resourcesTable').DataTable({
+                order: [[0, 'desc']],
+                pageLength: 10,
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "No entries to show",
+                    infoFiltered: "(filtered from _MAX_ total entries)"
+                }
+            });
 
-            // Edit Resource Modal
+            // Handle edit resource modal
             $('.edit-resource').click(function() {
                 var id = $(this).data('id');
                 var title = $(this).data('title');
                 var description = $(this).data('description');
-                var category = $(this).data('category');
+                var category = $(this).data('category').toLowerCase();
                 var resourceType = $(this).data('resource-type');
+                var filePath = $(this).data('file-path');
+                var externalLink = $(this).data('external-link');
                 var targetAudience = $(this).data('target-audience');
                 var schoolId = $(this).data('school-id');
+                var isVisible = $(this).data('is-visible');
 
                 $('#editResourceId').val(id);
                 $('#editTitle').val(title);
                 $('#editDescription').val(description);
-                $('#editCategoryId').val(category);
+                $('#editCategory').val(category);
                 $('#editResourceType').val(resourceType);
+                $('#editFilePath').val(filePath);
+                $('#editExternalLink').val(externalLink);
                 $('#editTargetAudience').val(targetAudience);
                 $('#editSchoolId').val(schoolId);
+                $('#editIsVisible').val(isVisible);
 
                 $('#editResourceModal').modal('show');
             });
 
-            // Delete Resource Modal
+            // Handle delete resource modal
             $('#deleteResourceModal').on('show.bs.modal', function(event) {
                 var button = $(event.relatedTarget);
                 var id = button.data('id');
                 var title = button.data('title');
-
-                var modal = $(this);
-                modal.find('#delete_id').val(id);
-                modal.find('#delete_title').text(title);
+                $('#delete_id').val(id);
+                $('#delete_title').text(title);
             });
         });
     </script>
