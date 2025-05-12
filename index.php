@@ -85,7 +85,7 @@ require_once 'auth/auth_functions.php';
                         <a class="nav-link" href="users/sdg4.php">About SDG 4</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Contact</a>
+                        <a class="nav-link" href="users/contact.php">Contact</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
