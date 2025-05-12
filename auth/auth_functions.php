@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/functions.php';
 
 // Function to sanitize user input
 function sanitize_input($data) {
@@ -9,19 +10,9 @@ function sanitize_input($data) {
     return $data;
 }
 
-// Function to check if user is logged in
-function is_logged_in() {
-    return isset($_SESSION['user_id']);
-}
-
 // Function to check if user is admin
 function is_admin() {
     return isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin';
-}
-
-// Function to check user type
-function get_user_type() {
-    return isset($_SESSION['user_type']) ? $_SESSION['user_type'] : null;
 }
 
 // Function to redirect user
@@ -72,5 +63,57 @@ function is_allowed_file_type($filename) {
     $allowed_extensions = array('pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'mp4', 'mp3');
     $extension = get_file_extension($filename);
     return in_array($extension, $allowed_extensions);
+}
+
+/**
+ * Authenticate a user with login credentials
+ * 
+ * @param string $login Username or email
+ * @param string $password Password
+ * @return array|false User data if authenticated, false otherwise
+ */
+function authenticate_user($login, $password) {
+    global $conn;
+    
+    $stmt = $conn->prepare("SELECT id, username, email, password, user_type, name FROM users WHERE username = ? OR email = ?");
+    $stmt->bind_param("ss", $login, $login);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+        if (verify_password($password, $user['password'])) {
+            return $user;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Generate a secure remember token
+ * 
+ * @return string Secure random token
+ */
+function generate_remember_token() {
+    return bin2hex(random_bytes(32));
+}
+
+/**
+ * Set remember token for a user
+ * 
+ * @param int $user_id User ID
+ * @param string $token Remember token
+ * @return bool Success status
+ */
+function set_remember_token($user_id, $token) {
+    global $conn;
+    
+    $expires = time() + (30 * 24 * 60 * 60); // 30 days
+    
+    $stmt = $conn->prepare("INSERT INTO remember_tokens (user_id, token, expires) VALUES (?, ?, ?)");
+    $stmt->bind_param("iss", $user_id, $token, date('Y-m-d H:i:s', $expires));
+    
+    return $stmt->execute();
 }
 ?>

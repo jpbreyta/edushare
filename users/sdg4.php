@@ -1,4 +1,7 @@
-<?php include './includes/header.php'; ?>
+<?php
+require_once '../auth/auth_functions.php';
+include './includes/header.php';
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -39,7 +42,7 @@
                         <div class="p-3 bg-light rounded shadow-sm">🎓 Promote <strong>lifelong learning</strong></div>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <div class="p-3 bg-light rounded shadow-sm">🌍 Raise awareness on <strong>education’s impact</strong></div>
+                        <div class="p-3 bg-light rounded shadow-sm">🌍 Raise awareness on <strong>education's impact</strong></div>
                     </div>
                 </div>
                 

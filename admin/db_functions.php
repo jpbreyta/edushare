@@ -646,4 +646,104 @@ function getDonationsCount() {
     if ($conn->more_results()) $conn->next_result();
     return $total;
 }
+
+// Contact message functions
+function getAllContactMessages() {
+    global $conn;
+    $result = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
+    
+    $messages = [];
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $messages[] = $row;
+        }
+    }
+    return $messages;
+}
+
+function addContactMessage($user_id, $message) {
+    global $conn;
+    
+    $stmt = $conn->prepare("INSERT INTO contact_messages (user_id, message, created_at) VALUES (?, ?, NOW())");
+    if (!$stmt) {
+        error_log("Prepare failed in addContactMessage: (" . $conn->errno . ") " . $conn->error);
+        return false;
+    }
+    
+    $stmt->bind_param("is", $user_id, $message);
+    $result = $stmt->execute();
+    $stmt->close();
+    
+    return $result;
+}
+
+function deleteContactMessage($message_id) {
+    global $conn;
+    
+    $stmt = $conn->prepare("DELETE FROM contact_messages WHERE id = ?");
+    if (!$stmt) {
+        error_log("Prepare failed in deleteContactMessage: (" . $conn->errno . ") " . $conn->error);
+        return false;
+    }
+    
+    $stmt->bind_param("i", $message_id);
+    $result = $stmt->execute();
+    $stmt->close();
+    
+    return $result;
+}
+
+function addMessage($sender_id, $receiver_id, $subject, $body) {
+    global $conn;
+    
+    $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, subject, body) VALUES (?, ?, ?, ?)");
+    if (!$stmt) {
+        error_log("Prepare failed in addMessage: (" . $conn->errno . ") " . $conn->error);
+        return false;
+    }
+    
+    $stmt->bind_param("iiss", $sender_id, $receiver_id, $subject, $body);
+    $result = $stmt->execute();
+    $stmt->close();
+    
+    return $result;
+}
+
+function getInboxMessages($user_id) {
+    global $conn;
+    
+    $stmt = $conn->prepare("CALL GetInbox(?)");
+    if (!$stmt) {
+        error_log("Prepare failed in getInboxMessages: (" . $conn->errno . ") " . $conn->error);
+        return [];
+    }
+    
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $messages = [];
+    while ($row = $result->fetch_assoc()) {
+        $messages[] = $row;
+    }
+    
+    $stmt->close();
+    return $messages;
+}
+
+function deleteMessage($message_id, $user_id) {
+    global $conn;
+    
+    $stmt = $conn->prepare("CALL DeleteMessage(?, ?)");
+    if (!$stmt) {
+        error_log("Prepare failed in deleteMessage: (" . $conn->errno . ") " . $conn->error);
+        return false;
+    }
+    
+    $stmt->bind_param("ii", $message_id, $user_id);
+    $result = $stmt->execute();
+    $stmt->close();
+    
+    return $result;
+}
 ?> 

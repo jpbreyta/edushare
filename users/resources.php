@@ -2,6 +2,11 @@
 require_once '../auth/auth_functions.php';
 require_once '../auth/db_connect.php';
 
+// Check if user is logged in
+if (!is_logged_in()) {
+    redirect_with_message('../auth/login.php', 'Please log in to access resources.', 'warning');
+}
+
 $category = isset($_GET['category']) ? sanitize_input($_GET['category']) : '';
 $audience = isset($_GET['audience']) ? sanitize_input($_GET['audience']) : '';
 $search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
